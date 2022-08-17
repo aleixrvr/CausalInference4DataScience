@@ -1,5 +1,5 @@
 ---
-title: "Propensity Score Adjustment"
+title: "Propensity Score exercise solution"
 output:
   html_document:
     df_print: paged
