@@ -1,0 +1,27 @@
+{
+    "id": "3E58C253",
+    "path": "~/Projects/Code/CausalInference4DataScience/exercises/chapter 5/propensity score exercise solution.Rmd",
+    "project_path": "propensity score exercise solution.Rmd",
+    "type": "r_markdown",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1660644550185.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "chunk_output_type": "inline",
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "156,61",
+        "scrollLine": "150"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1660752484,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1660752484150,
+    "read_only": false,
+    "read_only_alternatives": []
+}

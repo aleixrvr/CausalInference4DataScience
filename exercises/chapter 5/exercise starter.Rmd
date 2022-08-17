@@ -1,0 +1,54 @@
+---
+title: "Propensity Score Exercise Starter"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, comment='')
+```
+
+```{r libraries}
+library(data.table)
+library(magrittr)
+library(ggplot2)
+library(yaml)
+library(pROC)
+library(glue)
+```
+
+
+First we read the dataset and calculate the proportion of deaths in each group
+```{r reading_data}
+confounders <- read_yaml('confounders.yml')
+rhc <- fread('rhc_dataset.csv') %>% 
+  .[, swang1 := as.factor(ifelse(swang1=='RHC', 1, 0))]
+
+rhc[, mean(death == 'Yes'), swang1]
+```
+
+Let's calculate the propensity score using logistic regression, and evaluate its accuracy using the AUC (observe that in this case we haven't used cross-fitting).
+```{r calculating_ps}
+confounders %>% 
+  paste(collapse=" + ") %>% 
+  paste("swang1", ., sep=" ~ ") ->
+  formula_logistic
+ps_model <- glm(formula = formula_logistic, family  = "binomial", data = rhc)
+ps_scores <- predict(ps_model, data=rhc, type = "response")
+auc_res <- auc(roc(rhc[, swang1], ps_scores))
+```
+
+
+With the predicted propensity scores, we can plot their distribution for both groups to visual assess the positivity assumption
+```{r visual_inspection}
+data.table(
+  ps = ps_scores, 
+  swang1 = rhc[, swang1]
+) %>% 
+  ggplot(aes(ps, group=swang1, fill=swang1, color=swang1)) +
+  geom_density(alpha=0.3) +
+  ggtitle("AUC logistic: {auc_res %>% round(4)}" %>% glue)
+```
+
+In this dataset there is a clear overlap between treatment and control groups, so, if we used logistic regression for calculating the propensity scores, we would conclude that the positivity assumption holds for every patient.
+
+Now it's your turn, and you can follow the steps provided in the book. The main objective is to elaborate more the calculation of propensity scores using machine learning models (boosting) and also calculate the ATE. Good luck!
