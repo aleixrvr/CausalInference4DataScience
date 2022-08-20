@@ -1,0 +1,75 @@
+---
+title: "Chapter 4 - exercise"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment="")
+```
+
+```{r}
+library(rpart)
+set.seed(12345)
+
+n <- 20
+maxdepth <- 5
+a_z_d <- 5
+a_z_y <- 5
+a_d_y <- 2
+sd <- 1
+```
+
+
+# Generate the data
+```{r}
+z <- rnorm(n, sd=sd)
+x <- as.numeric(runif(n) < 1/(1+exp(-a_z_d*z)))
+y <- a_z_y*z + a_d_y*x + rnorm(n, sd=sd)
+df <- data.frame(z, x, y)
+```
+
+
+# Calculate the difference between groups of outcome y
+```{r}
+mean(df[df$x == 1, ]$y) - mean(df[df$x == 0, ]$y)
+```
+
+
+# S-learner
+```{r}
+model <- rpart(y~., data=df,
+  control=rpart.control(maxdepth = maxdepth, minsplit = 2))
+
+df_do_0 <- df
+df_do_0$x <- 0
+predictions_0 <- predict(model, df_do_0)
+
+df_do_1 <- df
+df_do_1$x <- 1
+predictions_1 <- predict(model, df_do_1)
+
+print("ATE")
+print(mean(predictions_1 - predictions_0))
+print(predictions_1 - predictions_0)
+```
+
+
+# T-Learner
+```{r}
+df_0 <- df[df$x == 0, ]
+df_1 <- df[df$x == 1, ]
+
+model_0 <- rpart(y~., data=df_0,
+  control=rpart.control(maxdepth = maxdepth, minsplit = 2))
+
+model_1 <- rpart(y~., data=df_1,
+  control=rpart.control(maxdepth = maxdepth, minsplit = 2))
+
+predictions_0 <- predict(model_0, df)
+predictions_1 <- predict(model_1, df)
+
+print("ATE")
+print(mean(predictions_1 - predictions_0))
+print(predictions_1 - predictions_0)
+```
+
