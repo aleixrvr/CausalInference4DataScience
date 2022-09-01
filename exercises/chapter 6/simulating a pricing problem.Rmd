@@ -1,0 +1,57 @@
+---
+title: "Simulating a pricing problem - a walkthrough"
+output: html_document
+date: "2022-08-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data simulation
+
+```{r}
+set.seed(1234)
+
+n = 1000
+
+distance <- sample(c(0,0.5, 1), n, replace = TRUE)
+price <- 10 - 3*distance + rnorm(n, sd = 0.5)
+customers <- 30 - 2*price - 10*distance + rnorm(n, sd = 2)
+```
+
+## Impact of price
+
+Running a linear regression
+```{r}
+lm(customers~price)
+```
+We see that the coefficient of the price is positive, which shouldn't be like this (we know for sure that it should be -2)
+
+If we plot the data, we see that there is a positive trend of the price into the number of customers, so it is not a problem of the linear regression.
+```{r}
+library(ggplot2)
+
+df <- data.frame(price, distance = factor(distance), customers)
+
+ggplot(df, aes(price, customers)) +
+  geom_point() +
+  ggtitle('Price vs customers') +
+  geom_smooth(method='lm')
+```
+
+If we plot the data including the distance we can see that the distance is acting as a confounder
+
+```{r}
+ggplot(df, aes(price, customers, color=distance)) +
+  geom_point() +
+  ggtitle('Price vs customers including distance') +
+  geom_smooth(method='lm')
+```
+
+Now we include the distance into the regression and we see that the coefficient of price is close to the real coefficient.
+
+```{r}
+lm(customers ~ price + distance)
+```
+
