@@ -5,7 +5,7 @@ date: "2022-08-30"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, comment="")
 ```
 
 ## Data simulation
@@ -55,3 +55,12 @@ Now we include the distance into the regression and we see that the coefficient 
 lm(customers ~ price + distance)
 ```
 
+## Impact of distance
+
+When we are interested in measuring the total effect, since the distance has no confounders, we can directly run the regression
+
+```{r}
+lm(customers~distance)
+```
+
+Obtaining a coefficient of the distance that is close to the -4 that it is expected to be
