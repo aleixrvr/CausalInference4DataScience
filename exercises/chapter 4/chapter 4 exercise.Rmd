@@ -38,7 +38,7 @@ mean(df[df$x == 1, ]$y) - mean(df[df$x == 0, ]$y)
 # S-learner
 ```{r}
 model <- rpart(y~., data=df,
-  control=rpart.control(maxdepth = maxdepth, minsplit = 2))
+  control=rpart.control(maxdepth = maxdepth, minsplit = 2, cp=0))
 
 df_do_0 <- df
 df_do_0$x <- 0
@@ -60,10 +60,10 @@ df_0 <- df[df$x == 0, ]
 df_1 <- df[df$x == 1, ]
 
 model_0 <- rpart(y~., data=df_0,
-  control=rpart.control(maxdepth = maxdepth, minsplit = 2))
+  control=rpart.control(maxdepth = maxdepth, minsplit = 2, cp=0))
 
 model_1 <- rpart(y~., data=df_1,
-  control=rpart.control(maxdepth = maxdepth, minsplit = 2))
+  control=rpart.control(maxdepth = maxdepth, minsplit = 2, cp=0))
 
 predictions_0 <- predict(model_0, df)
 predictions_1 <- predict(model_1, df)
