@@ -1,9 +1,12 @@
 ---
 title: "Exercise 1 - Solution"
-output:
-  prettydoc::html_pretty:
-    theme: leonids
-    highlight: github
+number-sections: true
+format:
+  html:
+    toc: true
+    toc-location: left
+    theme: default
+    embed-resources: true
 ---
 
 ```{r setup, include=FALSE}
@@ -11,97 +14,97 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-## RCT or A/B TEST
+# RCT or A/B Test
 
-### Data Simulation
+## Data Simulation
 ```{r}
 set.seed(1234)
 n <- 10000
 treatment <- rbinom(n, 1, 0.5)
-outcome <- rbinom(n, 1, 0.3)*treatment + rbinom(n, 1, 0.5)*(1-treatment)
+outcome <- rbinom(n, 1, 0.3) * treatment + rbinom(n, 1, 0.5) * (1 - treatment)
 ```
 
-### Results
+## Results
 
 - $P(O=1|T=1) - P(O=1|T=0)$ = `r mean(outcome[treatment==1]) - mean(outcome[treatment==0])`
-- $\mbox{adjustment}(1) - \mbox{adjustment}(0)$ doesn't apply
+- $adjustment(1) - adjustment(0)$ doesn't apply
 - ATE = 0.3 - 0.5 = -0.2
 - $\hat{ATE} = P(O=1|do(T=1)) - P(O=1|do(T=0))$ = `r mean(outcome[treatment==1]) - mean(outcome[treatment==0])`
 
-## Adjustment formula
+# Adjustment formula
 
 ```{r}
-adjustment <- function(t, o, z, t0){
-  ind_t0 <- t == t0
-  z_values <- unique(z)
-  
-  adjusted_prob <- 0
-  for(z_ in z_values){
-    ind_z_ <- z == z_
-    ind <- ind_t0 & ind_z_
-    adjusted_prob <- adjusted_prob + mean(o[ind])*mean(ind_z_)
-  }
-  
-  return(adjusted_prob)
+adjustment <- function(t, o, z, t0) {
+    ind_t0 <- t == t0
+    z_values <- unique(z)
+
+    adjusted_prob <- 0
+    for (z_ in z_values) {
+        ind_z_ <- z == z_
+        ind <- ind_t0 & ind_z_
+        adjusted_prob <- adjusted_prob + mean(o[ind]) * mean(ind_z_)
+    }
+
+    return(adjusted_prob)
 }
 ```
 
 
-## CONFOUNDER
+# Confounder
 
-### Data Simulation
+## Data Simulation
 ```{r}
 set.seed(1234)
 n <- 10000
 
 confounder <- rbinom(n, 1, 0.8)
-treatment <- rbinom(n, 1, 0.6)*confounder + rbinom(n, 1, 0.2)*(1-confounder)
-outcome <- rbinom(n, 1, 0.3)*treatment + rbinom(n, 1, 0.5)*(1-treatment) + confounder + rnorm(n)
+treatment <- rbinom(n, 1, 0.6) * confounder + rbinom(n, 1, 0.2) * (1 - confounder)
+outcome <- rbinom(n, 1, 0.3) * treatment + rbinom(n, 1, 0.5) * (1 - treatment) + confounder + rnorm(n)
 ```
 
-### Results
+## Results
 
 - $P(O=1|T=1) - P(O=1|T=0)$ = `r mean(outcome[treatment==1]) - mean(outcome[treatment==0])`
-- $\mbox{adjustment}(1) - \mbox{adjustment}(0)$ = `r adjustment(treatment, outcome, confounder, 1) - adjustment(treatment, outcome, confounder, 0)`
+- $adjustment(1) - adjustment(0)$ = `r adjustment(treatment, outcome, confounder, 1) - adjustment(treatment, outcome, confounder, 0)`
 - ATE = 0.3 - 0.5 = -0.2
 - $\hat{ATE} = P(O=1|do(T=1)) - P(O=1|do(T=0))$ = `r adjustment(treatment, outcome, confounder, 1) - adjustment(treatment, outcome, confounder, 0)`
 
-## MEDIATOR
+# Mediator
 
-### Data Simulation
+## Data Simulation
 ```{r}
 set.seed(1234)
 n <- 10000
 
 treatment <- rbinom(n, 1, 0.4)
-mediator <- rbinom(n, 1, 0.6)*treatment + rbinom(n, 1, 0.2)*(1-treatment)
-outcome <- rbinom(n, 1, 0.4)*treatment + rbinom(n, 1, 0.5)*(1-treatment) + mediator + rnorm(n)
+mediator <- rbinom(n, 1, 0.6) * treatment + rbinom(n, 1, 0.2) * (1 - treatment)
+outcome <- rbinom(n, 1, 0.4) * treatment + rbinom(n, 1, 0.5) * (1 - treatment) + mediator + rnorm(n)
 ```
 
-### Results
+## Results
 
 - $P(O=1|T=1) - P(O=1|T=0)$ = `r mean(outcome[treatment==1]) - mean(outcome[treatment==0])`
-- $\mbox{adjustment}(1) - \mbox{adjustment}(0)$= `r adjustment(treatment, outcome, mediator, 1) - adjustment(treatment, outcome, mediator, 0)`
+- $adjustment(1) - adjustment(0)$= `r adjustment(treatment, outcome, mediator, 1) - adjustment(treatment, outcome, mediator, 0)`
 - ATE = (0.6 + 0.4) - (0.2 + 0.5) = 0.3
 - $\hat{ATE} = P(O=1|do(T=1)) - P(O=1|do(T=0))$ = `r mean(outcome[treatment==1]) - mean(outcome[treatment==0])`
 
-## PREDICTOR
+# Predictor
 
-### Data Simulation
+## Data Simulation
 ```{r}
 set.seed(1234)
 n <- 10000
 
 treatment <- rbinom(n, 1, 0.4)
 predictor <- rbinom(n, 1, 0.4)
-outcome <- rbinom(n, 1, 0.4)*treatment + rbinom(n, 1, 0.5)*(1-treatment) + predictor + rnorm(n)
+outcome <- rbinom(n, 1, 0.4) * treatment + rbinom(n, 1, 0.5) * (1 - treatment) + predictor + rnorm(n)
 
 ```
 
-### Results
+## Results
 
 - $P(O=1|T=1) - P(O=1|T=0)$ = `r mean(outcome[treatment==1]) - mean(outcome[treatment==0])`
-- $\mbox{adjustment}(1) - \mbox{adjustment}(0)$= `r adjustment(treatment, outcome, predictor, 1) - adjustment(treatment, outcome, predictor, 0)`
+- $adjustment(1) - adjustment(0)$= `r adjustment(treatment, outcome, predictor, 1) - adjustment(treatment, outcome, predictor, 0)`
 - ATE = 0.4 - 0.5 = -0.1
 
 $\hat{ATE}$ has two unbiased estimators
@@ -109,23 +112,23 @@ $\hat{ATE}$ has two unbiased estimators
 - $\hat{ATE} = P(O=1|do(T=1)) - P(O=1|do(T=0))$ = `r mean(outcome[treatment==1]) - mean(outcome[treatment==0])`
 - $\hat{ATE} = P(O=1|do(T=1)) - P(O=1|do(T=0))$ = `r adjustment(treatment, outcome, predictor, 1) - adjustment(treatment, outcome, predictor, 0)`
 
-## UNOBSERVED CONFOUNDER
+# Unobserved Confounder
 
-### Data Simulation
+## Data Simulation
 ```{r}
 set.seed(1234)
 n <- 10000
 
 confounder <- rbinom(n, 1, 0.8)
-treatment <- rbinom(n, 1, 0.6)*confounder + rbinom(n, 1, 0.2)*(1-confounder)
-outcome <- rbinom(n, 1, 0.3)*treatment + rbinom(n, 1, 0.5)*(1-treatment) + confounder + rnorm(n)
+treatment <- rbinom(n, 1, 0.6) * confounder + rbinom(n, 1, 0.2) * (1 - confounder)
+outcome <- rbinom(n, 1, 0.3) * treatment + rbinom(n, 1, 0.5) * (1 - treatment) + confounder + rnorm(n)
 
 ```
 
-### Results
+## Results
 
 - $P(O=1|T=1) - P(O=1|T=0)$ = `r mean(outcome[treatment==1]) - mean(outcome[treatment==0])`
-- $\mbox{adjustment}(1) - \mbox{adjustment}(0)$ cannot be calculated
+- $adjustment(1) - adjustment(0)$ cannot be calculated
 - ATE = -0.2
 - $\hat{ATE} = P(O=1|do(T=1)) - P(O=1|do(T=0))$ cannot be calculated
 

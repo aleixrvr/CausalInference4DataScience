@@ -1,10 +1,16 @@
 ---
-title: "Chapter 4 - exercise"
-output: html_document
+title: "Finding the difference between the S-learner and the T-learner"
+number-sections: true
+format:
+  html:
+    toc: true
+    toc-location: left
+    theme: default
+    embed-resources: true
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, comment="")
+knitr::opts_chunk$set(echo = TRUE, comment = "")
 ```
 
 ```{r}
@@ -22,9 +28,9 @@ sd <- 1
 
 # Generate the data
 ```{r}
-z <- rnorm(n, sd=sd)
-x <- as.numeric(runif(n) < 1/(1+exp(-a_z_d*z)))
-y <- a_z_y*z + a_d_y*x + rnorm(n, sd=sd)
+z <- rnorm(n, sd = sd)
+x <- as.numeric(runif(n) < 1 / (1 + exp(-a_z_d * z)))
+y <- a_z_y * z + a_d_y * x + rnorm(n, sd = sd)
 df <- data.frame(z, x, y)
 ```
 
@@ -37,8 +43,10 @@ mean(df[df$x == 1, ]$y) - mean(df[df$x == 0, ]$y)
 
 # S-learner
 ```{r}
-model <- rpart(y~., data=df,
-  control=rpart.control(maxdepth = maxdepth, minsplit = 2, cp=0))
+model <- rpart(y ~ .,
+    data = df,
+    control = rpart.control(maxdepth = maxdepth, minsplit = 2, cp = 0)
+)
 
 df_do_0 <- df
 df_do_0$x <- 0
@@ -59,11 +67,15 @@ print(predictions_1 - predictions_0)
 df_0 <- df[df$x == 0, ]
 df_1 <- df[df$x == 1, ]
 
-model_0 <- rpart(y~., data=df_0,
-  control=rpart.control(maxdepth = maxdepth, minsplit = 2, cp=0))
+model_0 <- rpart(y ~ .,
+    data = df_0,
+    control = rpart.control(maxdepth = maxdepth, minsplit = 2, cp = 0)
+)
 
-model_1 <- rpart(y~., data=df_1,
-  control=rpart.control(maxdepth = maxdepth, minsplit = 2, cp=0))
+model_1 <- rpart(y ~ .,
+    data = df_1,
+    control = rpart.control(maxdepth = maxdepth, minsplit = 2, cp = 0)
+)
 
 predictions_0 <- predict(model_0, df)
 predictions_1 <- predict(model_1, df)

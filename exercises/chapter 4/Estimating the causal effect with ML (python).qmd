@@ -1,0 +1,85 @@
+---
+title: "Finding the difference between the S-learner and the T-learner"
+format: ipynb
+jupyter: python3
+number-sections: true
+---
+
+
+```{python}
+from sklearn.tree import DecisionTreeRegressor
+from numpy.random import normal, uniform, seed
+from numpy import exp, mean
+from pandas import DataFrame
+
+seed(54321)
+
+n = 20
+max_depth = 5
+a_z_d = 5
+a_z_y = 5
+a_d_y = 2
+sd = 1
+```
+
+
+# Generate the data
+```{python}
+z = normal(size=n, scale=sd)
+x = (uniform(size=n) < 1 / (1 + exp(-a_z_d * z))).astype(int)
+y = a_z_y * z + a_d_y * x + normal(size=n, scale=sd)
+df = DataFrame({"z": z, "x": x, "y": y})
+```
+
+
+# Calculate the difference between groups of outcome y
+```{python}
+df.query("x==1").y.mean() - df.query("x==0").y.mean()
+```
+
+
+# S-learner
+```{python}
+model = DecisionTreeRegressor(max_depth=max_depth)
+X = df[["x", "z"]]
+y = df["y"]
+model.fit(X, y)
+
+
+df_do_0 = df.copy()
+df_do_0.x = 0
+predictions_0 = model.predict(df_do_0[["x", "z"]])
+
+df_do_1 = df.copy()
+df_do_1.x = 1
+predictions_1 = model.predict(df_do_1[["x", "z"]])
+
+print("ATE")
+print(mean(predictions_1 - predictions_0))
+print(predictions_1 - predictions_0)
+```
+
+
+# T-Learner
+```{python}
+df_0 = df.query("x==0")
+df_1 = df.query("x==1")
+
+model_0 = DecisionTreeRegressor(max_depth=max_depth)
+X_0 = df_0[["x", "z"]]
+y_0 = df_0["y"]
+model_0.fit(X_0, y_0)
+
+model_1 = DecisionTreeRegressor(max_depth=max_depth)
+X_1 = df_1[["x", "z"]]
+y_1 = df_1["y"]
+model_1.fit(X_1, y_1)
+
+predictions_0 = model_0.predict(df[["x", "z"]])
+predictions_1 = model_1.predict(df[["x", "z"]])
+
+print("ATE")
+print(mean(predictions_1 - predictions_0))
+print(predictions_1 - predictions_0)
+```
+

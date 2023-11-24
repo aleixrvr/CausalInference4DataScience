@@ -1,0 +1,196 @@
+---
+title: "Exercise 1 - Solution"
+format: ipynb
+jupyter: python3
+number-sections: true
+---
+
+
+## RCT or A/B Test
+
+### Data Simulation
+```{python}
+from numpy.random import binomial, normal, seed
+from numpy import mean, unique
+
+seed(1234)
+n = 10000
+treatment = binomial(1, 0.5, size=n)
+outcome = binomial(1, 0.3, size=n) * treatment + binomial(1, 0.5, size=n) * (
+    1 - treatment
+)
+```
+
+### Results
+
+- $P(O=1|T=1) - P(O=1|T=0)$ 
+```{python}
+print(mean(outcome[treatment==1]) - mean(outcome[treatment==0]))
+```
+- $\mbox{adjustment}(1) - \mbox{adjustment}(0)$ doesn't apply
+- ATE = 0.3 - 0.5 = -0.2
+- $\hat{ATE} = P(O=1|do(T=1)) - P(O=1|do(T=0))$ 
+```{python}
+print(mean(outcome[treatment==1]) - mean(outcome[treatment==0]))
+```
+
+## Adjustment formula
+
+```{python}
+def adjustment(t, o, z, t0):
+    ind_t0 = t == t0
+    z_values = unique(z)
+
+    adjusted_prob = 0
+    for z_ in z_values:
+        ind_z_ = z == z_
+        ind = ind_t0 & ind_z_
+        adjusted_prob = adjusted_prob + mean(o[ind]) * mean(ind_z_)
+    return adjusted_prob
+
+
+```
+
+
+## Confounder
+
+### Data Simulation
+```{python}
+seed(1234)
+n = 10000
+confounder = binomial(1, 0.8, size=n)
+treatment = binomial(1, 0.6, size=n) * confounder + binomial(1, 0.2, size=n) * (
+    1 - confounder
+)
+outcome = (
+    binomial(1, 0.3, size=n) * treatment
+    + binomial(1, 0.5, size=n) * (1 - treatment)
+    + confounder
+    + normal(size=n)
+)
+```
+
+### Results
+
+- $P(O=1|T=1) - P(O=1|T=0)$ 
+```{python}
+print(mean(outcome[treatment==1]) - mean(outcome[treatment==0]))
+```
+- $\mbox{adjustment}(1) - \mbox{adjustment}(0)$ 
+```{python}
+print(adjustment(treatment, outcome, confounder, 1) - adjustment(treatment, outcome, confounder, 0))
+```
+- ATE = 0.3 - 0.5 = -0.2
+- $\hat{ATE} = P(O=1|do(T=1)) - P(O=1|do(T=0))$ 
+```{python}
+print(adjustment(treatment, outcome, confounder, 1) - adjustment(treatment, outcome, confounder, 0))
+```
+
+## Mediator
+
+### Data Simulation
+```{python}
+seed(1234)
+n = 10000
+
+treatment = binomial(1, 0.4, size=n)
+mediator = binomial(1, 0.6, size=n) * treatment + binomial(1, 0.2, size=n) * (
+    1 - treatment
+)
+outcome = (
+    binomial(1, 0.4, size=n) * treatment
+    + binomial(1, 0.5, size=n) * (1 - treatment)
+    + mediator
+    + normal(size=n)
+)
+```
+
+### Results
+
+- $P(O=1|T=1) - P(O=1|T=0)$ 
+```{python}
+print(mean(outcome[treatment==1]) - mean(outcome[treatment==0]))
+```
+- $\mbox{adjustment}(1) - \mbox{adjustment}(0)$
+```{python}
+print(adjustment(treatment, outcome, mediator, 1) - adjustment(treatment, outcome, mediator, 0))
+```
+- ATE = (0.6 + 0.4) - (0.2 + 0.5) = 0.3
+- $\hat{ATE} = P(O=1|do(T=1)) - P(O=1|do(T=0))$ 
+```{python}
+print(mean(outcome[treatment==1]) - mean(outcome[treatment==0]))
+```
+
+## Predictor
+
+### Data Simulation
+```{python}
+seed(1234)
+n = 10000
+
+treatment = binomial(1, 0.4, size=n)
+predictor = binomial(1, 0.4, size=n)
+outcome = (
+    binomial(1, 0.4, size=n) * treatment
+    + binomial(1, 0.5, size=n) * (1 - treatment)
+    + predictor
+    + normal(size=n)
+)
+```
+
+### Results
+
+- $P(O=1|T=1) - P(O=1|T=0)$ 
+```{python}
+print(mean(outcome[treatment==1]) - mean(outcome[treatment==0]))
+```
+- $\mbox{adjustment}(1) - \mbox{adjustment}(0)$
+```{python}
+print(adjustment(treatment, outcome, predictor, 1) - adjustment(treatment, outcome, predictor, 0))
+```
+- ATE = 0.4 - 0.5 = -0.1
+
+$\hat{ATE}$ has two unbiased estimators
+
+- $\hat{ATE} = P(O=1|do(T=1)) - P(O=1|do(T=0))$ 
+```{python}
+print(mean(outcome[treatment==1]) - mean(outcome[treatment==0]))
+```
+- $\hat{ATE} = P(O=1|do(T=1)) - P(O=1|do(T=0))$ 
+```{python}
+print(adjustment(treatment, outcome, predictor, 1) - adjustment(treatment, outcome, predictor, 0))
+```
+## Unobserved Confounder
+
+### Data Simulation
+```{python}
+seed(1234)
+n = 10000
+confounder = binomial(1, 0.8, size=n)
+treatment = binomial(1, 0.6, size=n) * confounder + binomial(1, 0.2, size=n) * (
+    1 - confounder
+)
+outcome = (
+    binomial(1, 0.3, size=n) * treatment
+    + binomial(1, 0.5, size=n) * (1 - treatment)
+    + confounder
+    + normal(size=n)
+)
+```
+
+### Results
+
+- $P(O=1|T=1) - P(O=1|T=0)$ 
+```{python}
+print(mean(outcome[treatment==1]) - mean(outcome[treatment==0]))
+```
+- $\mbox{adjustment}(1) - \mbox{adjustment}(0)$ cannot be calculated
+- ATE = -0.2
+- $\hat{ATE} = P(O=1|do(T=1)) - P(O=1|do(T=0))$ cannot be calculated
+
+# Part II
+
+$P^{do(C:=2)}(E) = P(E|C=2) \sim N(2, 1)$
+
+$P^{do(E:=2)}(C) \sim N(0, 1) ≠ P(C|E=2) = P(N1| N1+N2=2) \sim N(1, (1/2)1/2)$
+

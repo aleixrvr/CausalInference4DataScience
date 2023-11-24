@@ -1,0 +1,53 @@
+---
+title: "Propensity Score Exercise Starter"
+format: ipynb
+jupyter: python3
+number-sections: true
+---
+
+
+```{python libraries}
+import pandas as pd
+import yaml
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+```
+
+
+First we read the dataset and calculate the proportion of deaths in each group
+```{python reading_data}
+rhc = pd.read_csv("materials/rhc_dataset.csv")
+with open("materials/confounders.yml", "r") as f:
+    confounders = yaml.safe_load(f)
+
+rhc["swang1"] = (rhc["swang1"] == "RHC").astype(int)
+rhc["death"] = (rhc["death"] == "Yes").astype(int)
+rhc.groupby("swang1")["death"].mean()
+```
+
+Let's calculate the propensity score using logistic regression, and evaluate its accuracy using the AUC (observe that in this case we haven't used cross-fitting).
+```{python calculating_ps}
+X = rhc[confounders]
+X = pd.get_dummies(X)
+y = rhc["swang1"]
+ps_model = LogisticRegression(penalty="none")
+ps_model.fit(X, y)
+rhc["ps_scores"] = ps_model.predict_proba(X)[:, 1]
+```
+
+
+With the predicted propensity scores, we can plot their distribution for both groups to visual assess the positivity assumption
+```{python visual_inspection}
+auc = round(roc_auc_score(rhc["swang1"], rhc["ps_scores"]), 4)
+sns.kdeplot(
+    data=rhc, x="ps_scores", hue="swang1", fill=True, common_norm=False, alpha=0.4
+).set_title(f"AUC logistic:{auc}")
+plt.show()
+```
+
+In this dataset there is a clear overlap between treatment and control groups, so, if we used logistic regression for calculating the propensity scores, we would conclude that the positivity assumption holds for every patient.
+
+Now it's your turn, and you can follow the steps provided in the book. The main objective is to elaborate more the calculation of propensity scores using machine learning models (boosting) and also calculate the ATE. Good luck!

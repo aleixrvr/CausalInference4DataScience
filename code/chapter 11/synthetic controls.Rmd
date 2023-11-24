@@ -1,0 +1,88 @@
+---
+title: "Synthetic Controls"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(data.table)
+library(ggplot2)
+library(CausalImpact)
+library(tidyr)
+```
+
+```{r}
+set.seed(1234)
+periods_n <- 15
+time_points <- seq(-periods_n, periods_n)
+impact <- 1000
+
+n <- length(time_points)
+time_points <- seq(-periods_n, periods_n)
+seasonality <- -cos(time_points/(2*pi))
+```
+
+```{r}
+res_plot <- qplot(time_points, seasonality, geom = 'line')
+
+ggsave('../../../images/ch11-seasonality.png', res_plot)
+res_plot
+```
+
+```{r}
+D <- as.numeric(time_points >= 0)
+Y_0 <- 500 + 100*seasonality + rnorm(n, sd=50)
+Y_1 <- Y_0 + impact * D / (abs(time_points) + 1)
+Y <- D*Y_1 + (1-D)*Y_0
+
+X_1 <- 400 + 100*seasonality + rnorm(n, sd=20)
+X_2 <- 700 + 80*seasonality + rnorm(n, sd=60)
+
+df <- data.frame(Y, X_1, X_2, time=time_points)
+```
+
+```{r}
+df_plot <- pivot_longer(df, cols=c('Y', 'X_1', 'X_2'),names_to = 'variable' )
+res_plot <- ggplot(df_plot, aes(time, value, color=variable)) +
+  geom_line() +
+  ylab('Number of views')
+
+ggsave('../../../images/ch11-syntheticcontrols.png', res_plot)
+res_plot
+```
+
+
+
+```{r}
+pre.period <- c(-periods_n, -1) + periods_n + 1
+post.period <- c(0, periods_n) + periods_n + 1
+```
+
+```{r comment=""}
+estimated_impact <- CausalImpact(df, pre.period, post.period)
+estimated_impact
+```
+
+```{r}
+res_plot <- plot(estimated_impact)
+
+ggsave('../../../images/ch11-causalimpact.png', res_plot)
+res_plot
+```
+
+```{r}
+inds = D > 0
+mean(impact * D[inds] / (abs(time_points[inds]) + 1))
+```
+
+
+```{r comment=""}
+pre.period <- c(-periods_n, -1) + periods_n + 1
+post.period <- c(periods_n + 1, periods_n + 1)
+
+estimated_impact <- CausalImpact(df, pre.period, post.period)
+estimated_impact
+```

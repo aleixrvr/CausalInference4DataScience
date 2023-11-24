@@ -1,14 +1,19 @@
 ---
 title: "Simulating a pricing problem - a walkthrough"
-output: html_document
-date: "2022-08-30"
+number-sections: true
+format:
+  html:
+    toc: true
+    toc-location: left
+    theme: default
+    embed-resources: true
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, comment="")
 ```
 
-## Data simulation
+# Data simulation
 
 ```{r}
 set.seed(1234)
@@ -20,7 +25,7 @@ price <- 10 - 3*distance + rnorm(n, sd = 0.5)
 customers <- 30 - 2*price - 10*distance + rnorm(n, sd = 2)
 ```
 
-## Impact of price
+# Impact of price
 
 Running a linear regression
 ```{r}
@@ -55,7 +60,7 @@ Now we include the distance into the regression and we see that the coefficient 
 lm(customers ~ price + distance)
 ```
 
-## Impact of distance
+# Impact of distance
 
 When we are interested in measuring the total effect, since the distance has no confounders, we can directly run the regression
 

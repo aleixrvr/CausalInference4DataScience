@@ -1,0 +1,183 @@
+---
+title: "RDDs"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(glue)
+library(rdrobust)
+```
+
+```{r}
+set.seed(1234)
+periods_n <- 15
+time_points <- seq(-periods_n, periods_n)
+impact <- 1000
+
+n <- length(time_points)
+time_points <- seq(-periods_n, periods_n)
+seasonality <- -cos(time_points/(2*pi))
+```
+
+```{r}
+res_plot <- qplot(time_points, seasonality, geom = 'line')
+
+ggsave('../../../images/ch11-seasonality.png', res_plot)
+res_plot
+```
+
+```{r}
+D <- as.numeric(time_points >= 0)
+Y_0 <- 500 + 100*seasonality + rnorm(n, sd=50)
+Y_1 <- Y_0 + impact * D / (abs(time_points) + 1)
+Y <- D*Y_1 + (1-D)*Y_0
+```
+
+
+```{r}
+df_observed <- data.frame(
+  time = time_points,
+  Y = Y, 
+  D
+)
+res_plot <- ggplot(df_observed, aes(time, Y)) +
+  geom_line() +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+  ylab('Number of views of the 3rd Star Wars movie')
+
+ggsave('../../../images/ch11-rdd_observed.png', res_plot)
+res_plot
+```
+
+
+Let's check that the impact is correct. It should coincide with the maximum value of the difference of the time series `r max(abs(Y_0-Y_1))`
+
+```{r}
+df_po <- data.frame(
+  time = c(time_points, time_points),
+  y = c(Y_0, Y_1),
+  potential_outcomes = c(rep('0', n), rep('1', n))
+)
+res_plot <- ggplot(df_po, aes(time, y, color=potential_outcomes, shape=potential_outcomes)) +
+  geom_line(alpha=0.6) +
+  geom_point(alpha=0.6) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+  ylab('POs of the Number of views of the 3rd Star Wars movie')
+
+ggsave('../../../images/ch11-rdd_potential_outcomes.png', res_plot)
+res_plot
+```
+
+
+# Method 1
+
+```{r}
+results <- c()
+time_windows <- 10:2
+for(time_window in time_windows){
+  ind <- abs(time_points) < time_window
+  results <- c(results, mean(Y[ind & D == 1]) - mean(Y[ind & D == 0]))
+}
+
+df_plot <- data.frame(time_window = time_windows, estimation = results)
+res_plot <- ggplot(df_plot, aes(time_window, estimation)) +
+  geom_line() +
+  geom_hline(yintercept = 1000, color='green') +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 1200)) 
+
+ggsave('../../../images/ch11-mean_evolution.png', res_plot)
+res_plot
+```
+
+# Method 2
+
+```{r}
+df_observed_ <- df_observed
+df_observed_$D <- as.factor(df_observed_$D)
+res_plot <- ggplot(df_observed_, aes(time, Y, color=D)) +
+  geom_line() +
+  geom_smooth(method=lm, se=FALSE) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+  ylab('Number of views of the 3rd Star Wars movie')
+
+ggsave('../../../images/ch11-rdd_linear.png', res_plot)
+res_plot
+```
+
+
+```{r}
+results <- data.frame()
+time_windows <- 10:4
+for(time_window in time_windows){
+  ind <- abs(time_points) < time_window
+  time_points_window <- time_points[ind]
+  Y_window <- Y[ind]
+  D_window <- D[ind]
+  model <- lm(Y_window~D_window*time_points_window)
+  res_stats <- cbind(
+    time_window = time_window,
+    t(coef(model)['D_window']), 
+    t(confint(model)[2, ]))
+  results <- rbind(res_stats, results)
+}
+
+colnames(results)[2] <- 'Estimate'
+low <- sym('2.5 %')
+high <- sym('2.5 %')
+
+res_plot <- ggplot(results, aes(
+  time_window, Estimate, ymin = !!sym('2.5 %'), ymax = !!sym('97.5 %'))
+  ) +
+  geom_line() +
+  geom_hline(yintercept = impact, color='green') +
+  geom_ribbon(alpha = 0.1) +
+  ggtitle(glue("Best Estimate: {round(max(results[, 'Estimate']), 2)}"))
+
+
+ggsave('../../../images/ch11-linear_evolution.png', res_plot)
+res_plot
+```
+
+```{r}
+results[results$time_window==4, ]
+```
+
+
+
+# Method 3
+
+```{r}
+png('../../../images/ch11-rdplot.png')
+rdplot(Y, time_points)
+dev.off()
+```
+
+
+```{r}
+summary(rdrobust(Y, time_points))
+```
+
+
+```{r}
+z <- seq(-2, 2, 0.01)
+y <- ifelse(abs(z) < 1, 1, 0)
+res_plot <- qplot(z, y)
+
+ggsave('../../../images/ch11-uniform.png', res_plot)
+res_plot
+```
+
+```{r}
+z <- seq(-2, 2, 0.01)
+y <- ifelse(abs(z) < 1, 1 - abs(z), 0)
+res_plot <- qplot(z, y)
+
+ggsave('../../../images/ch11-triangular.png', res_plot)
+res_plot
+```
+
