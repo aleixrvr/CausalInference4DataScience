@@ -1,0 +1,40 @@
+---
+title: "Simulating a pricing problem - a walkthrough"
+format: ipynb
+jupyter: python3
+number-sections: true
+---
+
+# Data simulation
+
+```{python}
+from numpy.random import choice, normal
+import statsmodels.formula.api as smf
+import pandas as pd
+
+n = 100
+ghosts = choice(range(2, 7), n)
+bonuses = 8 - ghosts + 0.2 * choice([-1, 0, 1], n)
+error = normal(n, scale=0.1)
+
+time = 20 + 1.5 * ghosts - 2 * bonuses + error
+df = pd.DataFrame({"time": time, "bonuses": bonuses, "ghosts": ghosts})
+
+```
+
+# Obtaining a linear model of bonuses and time
+
+```{python}
+mod = smf.ols(formula='time ~ bonuses', data=df)
+
+mod.fit().summary()
+```
+
+# Obtaining a linear model of bonuses and ghosts
+
+
+```{python}
+mod = smf.ols(formula="time ~ bonuses + ghosts", data=df)
+
+mod.fit().summary()
+```

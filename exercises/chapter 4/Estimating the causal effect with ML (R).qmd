@@ -19,9 +19,9 @@ set.seed(12345)
 
 n <- 20
 maxdepth <- 5
-a_z_d <- 5
-a_z_y <- 5
-a_d_y <- 2
+b_z_x <- 5
+b_z_y <- 5
+b_x_y <- 2
 sd <- 1
 ```
 
@@ -29,8 +29,8 @@ sd <- 1
 # Generate the data
 ```{r}
 z <- rnorm(n, sd = sd)
-x <- as.numeric(runif(n) < 1 / (1 + exp(-a_z_d * z)))
-y <- a_z_y * z + a_d_y * x + rnorm(n, sd = sd)
+x <- as.numeric(runif(n) < 1 / (1 + exp(-b_z_x * z)))
+y <- b_z_y * z + b_x_y * x + rnorm(n, sd = sd)
 df <- data.frame(z, x, y)
 ```
 

@@ -1,5 +1,5 @@
 ---
-title: "Simulating a pricing problem - a walkthrough"
+title: "Pacman simulation"
 format: ipynb
 jupyter: python3
 number-sections: true

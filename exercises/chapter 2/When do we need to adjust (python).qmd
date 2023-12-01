@@ -6,9 +6,9 @@ number-sections: true
 ---
 
 
-## RCT or A/B Test
+# RCT or A/B Test
 
-### Data Simulation
+## Data Simulation
 ```{python}
 from numpy.random import binomial, normal, seed
 from numpy import mean, unique
@@ -21,20 +21,20 @@ outcome = binomial(1, 0.3, size=n) * treatment + binomial(1, 0.5, size=n) * (
 )
 ```
 
-### Results
+## Results
 
 - $P(O=1|T=1) - P(O=1|T=0)$ 
 ```{python}
 print(mean(outcome[treatment==1]) - mean(outcome[treatment==0]))
 ```
-- $\mbox{adjustment}(1) - \mbox{adjustment}(0)$ doesn't apply
+- adjustment(1) - adjustment(0) doesn't apply
 - ATE = 0.3 - 0.5 = -0.2
 - $\hat{ATE} = P(O=1|do(T=1)) - P(O=1|do(T=0))$ 
 ```{python}
 print(mean(outcome[treatment==1]) - mean(outcome[treatment==0]))
 ```
 
-## Adjustment formula
+# Adjustment formula
 
 ```{python}
 def adjustment(t, o, z, t0):
@@ -52,9 +52,9 @@ def adjustment(t, o, z, t0):
 ```
 
 
-## Confounder
+# Confounder
 
-### Data Simulation
+## Data Simulation
 ```{python}
 seed(1234)
 n = 10000
@@ -70,13 +70,13 @@ outcome = (
 )
 ```
 
-### Results
+## Results
 
 - $P(O=1|T=1) - P(O=1|T=0)$ 
 ```{python}
 print(mean(outcome[treatment==1]) - mean(outcome[treatment==0]))
 ```
-- $\mbox{adjustment}(1) - \mbox{adjustment}(0)$ 
+- adjustment(1) - adjustment(0) 
 ```{python}
 print(adjustment(treatment, outcome, confounder, 1) - adjustment(treatment, outcome, confounder, 0))
 ```
@@ -86,9 +86,9 @@ print(adjustment(treatment, outcome, confounder, 1) - adjustment(treatment, outc
 print(adjustment(treatment, outcome, confounder, 1) - adjustment(treatment, outcome, confounder, 0))
 ```
 
-## Mediator
+# Mediator
 
-### Data Simulation
+## Data Simulation
 ```{python}
 seed(1234)
 n = 10000
@@ -105,13 +105,13 @@ outcome = (
 )
 ```
 
-### Results
+## Results
 
 - $P(O=1|T=1) - P(O=1|T=0)$ 
 ```{python}
 print(mean(outcome[treatment==1]) - mean(outcome[treatment==0]))
 ```
-- $\mbox{adjustment}(1) - \mbox{adjustment}(0)$
+- adjustment(1) - adjustment(0)
 ```{python}
 print(adjustment(treatment, outcome, mediator, 1) - adjustment(treatment, outcome, mediator, 0))
 ```
@@ -121,9 +121,9 @@ print(adjustment(treatment, outcome, mediator, 1) - adjustment(treatment, outcom
 print(mean(outcome[treatment==1]) - mean(outcome[treatment==0]))
 ```
 
-## Predictor
+# Predictor
 
-### Data Simulation
+## Data Simulation
 ```{python}
 seed(1234)
 n = 10000
@@ -138,13 +138,13 @@ outcome = (
 )
 ```
 
-### Results
+## Results
 
 - $P(O=1|T=1) - P(O=1|T=0)$ 
 ```{python}
 print(mean(outcome[treatment==1]) - mean(outcome[treatment==0]))
 ```
-- $\mbox{adjustment}(1) - \mbox{adjustment}(0)$
+- adjustment(1) - adjustment(0)
 ```{python}
 print(adjustment(treatment, outcome, predictor, 1) - adjustment(treatment, outcome, predictor, 0))
 ```
@@ -160,9 +160,9 @@ print(mean(outcome[treatment==1]) - mean(outcome[treatment==0]))
 ```{python}
 print(adjustment(treatment, outcome, predictor, 1) - adjustment(treatment, outcome, predictor, 0))
 ```
-## Unobserved Confounder
+# Unobserved Confounder
 
-### Data Simulation
+## Data Simulation
 ```{python}
 seed(1234)
 n = 10000
@@ -178,13 +178,13 @@ outcome = (
 )
 ```
 
-### Results
+## Results
 
 - $P(O=1|T=1) - P(O=1|T=0)$ 
 ```{python}
 print(mean(outcome[treatment==1]) - mean(outcome[treatment==0]))
 ```
-- $\mbox{adjustment}(1) - \mbox{adjustment}(0)$ cannot be calculated
+- adjustment(1) - adjustment(0) cannot be calculated
 - ATE = -0.2
 - $\hat{ATE} = P(O=1|do(T=1)) - P(O=1|do(T=0))$ cannot be calculated
 

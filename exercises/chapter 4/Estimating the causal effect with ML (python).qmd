@@ -16,9 +16,9 @@ seed(54321)
 
 n = 20
 max_depth = 5
-a_z_d = 5
-a_z_y = 5
-a_d_y = 2
+b_z_x = 5
+b_z_y = 5
+b_x_y = 2
 sd = 1
 ```
 
@@ -26,8 +26,8 @@ sd = 1
 # Generate the data
 ```{python}
 z = normal(size=n, scale=sd)
-x = (uniform(size=n) < 1 / (1 + exp(-a_z_d * z))).astype(int)
-y = a_z_y * z + a_d_y * x + normal(size=n, scale=sd)
+x = (uniform(size=n) < 1 / (1 + exp(-b_z_x * z))).astype(int)
+y = b_z_y * z + b_x_y * x + normal(size=n, scale=sd)
 df = DataFrame({"z": z, "x": x, "y": y})
 ```
 

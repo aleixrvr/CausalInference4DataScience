@@ -1,0 +1,53 @@
+---
+title: "Pacman simulation"
+number-sections: true
+format:
+  html:
+    toc: true
+    toc-location: left
+    theme: default
+    embed-resources: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = "")
+```
+
+# Data simulation
+
+```{r}
+set.seed(2023)
+n <- 100
+
+ghosts <- sample(2:6, n, replace = TRUE)
+bonuses <- 8 - ghosts + 0.2*sample(c(-1, 0, 1), n, replace = TRUE)
+error <- rnorm(n, sd = 0.1)
+
+time <- 20 + 1.5 * ghosts - 2 * bonuses + error
+```
+
+
+#  Number of ghosts versus number of bonuses. 
+
+Points have been slightly perturbed to avoid point overlap.
+
+```{r}
+library(ggplot2)
+
+df <- data.frame(ghosts, bonuses)
+
+ggplot(df, aes(ghosts, bonuses)) +
+    geom_jitter(height = 0.1, width = 0.1)
+```
+
+# Obtaining a linear model of bonuses and time
+
+```{r}
+summary(lm(time ~ bonuses))
+```
+
+# Obtaining a linear model of bonuses and ghosts
+
+```{r}
+summary(lm(time ~ ghosts + bonuses))
+```
