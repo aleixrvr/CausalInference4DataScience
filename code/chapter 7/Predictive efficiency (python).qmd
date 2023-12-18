@@ -1,0 +1,65 @@
+---
+title: "Simulating a pricing problem - a walkthrough"
+format: ipynb
+jupyter: python3
+number-sections: true
+---
+
+# Data simulation: a predictor of the outcome
+
+```{python}
+from numpy.random import choice, normal, seed
+import statsmodels.formula.api as smf
+import random
+import pandas as pd
+
+seed(1234)
+
+n = 100
+
+z = normal(loc=0, scale=.5, size=n)
+x = normal(loc=0, scale=.5, size=n)
+y = 3*x + 3*z + normal(loc=0, scale=.5, size=n)
+
+df = pd.DataFrame({'x': x, 'y': y, 'z': z})
+```
+
+# Controling for a predictor of the outcome can reduce ATE's standard error 
+
+```{python}
+smf.ols(formula='y ~ x', data=df).fit().summary()
+```
+
+```{python}
+smf.ols(formula="y ~ x + z", data=df).fit().summary()
+```
+
+The standard error (variance of the estimation) of the second model is much lower than the first one. In this case, adding a covariate improves our estimation. 
+
+
+#  Data simulation: a predictor of the treatment variable
+
+
+```{python}
+n = 100
+
+z = normal(loc=0, scale=.5, size=n)
+x = z + normal(loc=0, scale=.01, size=n)
+y = 3*x + normal(loc=0, scale=.5, size=n)
+
+df = pd.DataFrame({'x': x, 'y': y, 'z': z})
+```
+
+# Controling for a predictor of the treatment increases ATE's standard error
+
+```{python}
+smf.ols(formula='y ~ x', data=df).fit().summary()
+```
+
+# Obtaining a linear model of bonuses and ghosts
+
+```{python}
+smf.ols(formula='y ~ x + z', data=df).fit().summary()
+```
+
+The standard error for the coefficient of 'x' is higher when controling for 'z'

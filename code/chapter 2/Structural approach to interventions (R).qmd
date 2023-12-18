@@ -1,0 +1,117 @@
+---
+title: "Structural Approach to Interventions"
+number-sections: true
+format:
+  html:
+    toc: true
+    toc-location: left
+    theme: default
+    embed-resources: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = "")
+```
+
+# Kidney stone data simulation
+
+```{r}
+library(data.table)
+set.seed(1234)
+
+patients_n <- 10000
+
+g <- function(size, u_1){
+  # probabilities calculated with the conditional probability formula: P(T|S) = P(T, S)/P(S)
+  # total patients = 750
+  prob_small <- 0.51
+  prob_large <- 1 - prob_small
+  prob_A <- ifelse(size == 'small', (87/750)/prob_small, (263/750)/prob_large)
+  return(ifelse(u_1 < prob_A, "A", "B"))
+}
+
+f <- function(size, treatment, u_2){
+  # probabilities obtained from Table "Recovery rates by treatment and size" in Chapter 2
+  if(size=='small'){
+    prob <- ifelse(treatment == 'A', 0.93, 0.87)
+  }else{
+    prob <- ifelse(treatment == 'A', 0.73, 0.62)
+  }
+  return(ifelse(u_2 < prob, 1, 0))
+}
+
+kidney_data <- data.frame()
+for(patient in 1:patients_n){
+  u_0 <- runif(1)
+  u_1 <- runif(1)
+  u_2 <- runif(1)
+  
+  size <- ifelse(u_0 < 0.51, 'small', 'large')
+  treatment <- g(size, u_1)
+  recovery <- f(size, treatment, u_2)
+
+  kidney_data <- rbind(
+    kidney_data, 
+    data.frame(size=size, treatment=treatment, recovery=recovery)
+  )
+}
+
+setDT(kidney_data)
+kidney_data[, .(recovery_prob = mean(recovery)), treatment]
+```
+
+We obtain recovery rates similar to the Table "Recovery rates by treatment" form Chapter 2 (up to some degree of uncertainty)
+
+## Intervening the treatment
+
+If we give treatment A to everyone, we will not use the assignment function `g`. Instead everyone will receive treatment A.
+
+```{r}
+kidney_data_A <- data.frame()
+for(patient in 1:patients_n){
+  u_0 <- runif(1)
+  u_1 <- runif(1)
+  u_2 <- runif(1)
+  
+  size <- ifelse(u_0 < 0.51, 'small', 'large')
+  treatment <- 'A' # everyone receives treatment A
+  recovery <- f(size, treatment, u_2)
+
+  kidney_data_A <- rbind(
+    kidney_data_A, 
+    data.frame(size=size, treatment=treatment, recovery=recovery)
+  )
+}
+
+setDT(kidney_data_A)
+kidney_data_A[, .(recovery_prob = mean(recovery)), treatment]
+```
+
+We can see that the results are similar to the ones obtained from the adjustment formula (up to some degree of uncertainty)
+
+## Randomizing the treament
+
+If we run a randomized controlled trial, the treatment is given at random
+
+```{r}
+kidney_data_RCT <- data.frame()
+for(patient in 1:patients_n){
+  u_0 <- runif(1)
+  u_1 <- runif(1)
+  u_2 <- runif(1)
+  
+  size <- ifelse(u_0 < 0.51, 'small', 'large')
+  treatment <- ifelse(u_1 < 0.5, 'A', 'B') # treatment is assigned at random
+  recovery <- f(size, treatment, u_2)
+
+  kidney_data_RCT <- rbind(
+    kidney_data_RCT, 
+    data.frame(size=size, treatment=treatment, recovery=recovery)
+  )
+}
+
+setDT(kidney_data_RCT)
+kidney_data_RCT[, .(recovery_prob = mean(recovery)), treatment]
+```
+
+We can see that the results are similar to the ones obtained in the previous execution and from the adjustment formula (up to some degree of uncertainty)

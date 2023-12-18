@@ -1,0 +1,117 @@
+---
+title: "Structural Approach to Interventions"
+format: ipynb
+jupyter: python3
+number-sections: true
+---
+
+
+# Kidney stone data simulation
+
+```{python}
+from numpy.random import uniform, seed
+import pandas as pd
+
+seed(1234)
+patients_n = 10000
+
+
+def g(size, u_1):
+    # probabilities calculated with the conditional probability formula: P(T|S) = P(T, S)/P(S)
+    # total patients = 750
+    prob_small = 0.51
+    prob_large = 1 - prob_small
+    prob_A = (87 / 750) / prob_small if size == "small" else (263 / 750) / prob_large
+    return "A" if u_1 < prob_A else "B"
+
+
+def f(size, treatment, u_2):
+    # probabilities obtained from Table "Recovery rates by treatment and size" in Chapter 2
+    if size == "small":
+        prob = 0.93 if treatment == "A" else 0.87
+    else:
+        prob = 0.73 if treatment == "A" else 0.62
+    return 1 if u_2 < prob else 0
+
+
+sizes = []
+treatments = []
+recoveries = []
+for patient in range(patients_n):
+    u_0 = uniform(size=1)
+    u_1 = uniform(size=1)
+    u_2 = uniform(size=1)
+
+    size = "small" if u_0 < 0.51 else "large"
+    treatment = g(size, u_1)
+    recovery = f(size, treatment, u_2)
+
+    sizes.append(size)
+    treatments.append(treatment)
+    recoveries.append(recovery)
+
+kidney_data = pd.DataFrame(
+    {"size": sizes, "treatment": treatments, "recovery": recoveries}
+)
+kidney_data.groupby("treatment")["recovery"].mean()
+```
+
+We obtain recovery rates similar to the Table "Recovery rates by treatment" form Chapter 2 (up to some degree of uncertainty)
+
+## Intervening the treatment
+
+If we give treatment A to everyone, we will not use the assignment function `g`. Instead everyone will receive treatment A.
+
+```{python}
+sizes = []
+treatments = []
+recoveries = []
+for patient in range(patients_n):
+    u_0 = uniform(size=1)
+    u_1 = uniform(size=1)
+    u_2 = uniform(size=1)
+
+    size = "small" if u_0 < 0.51 else "large"
+    treatment = "A"  # everyone receives treatment A
+    recovery = f(size, treatment, u_2)
+
+    sizes.append(size)
+    treatments.append(treatment)
+    recoveries.append(recovery)
+
+kidney_data_A = pd.DataFrame(
+    {"size": sizes, "treatment": treatments, "recovery": recoveries}
+)
+kidney_data_A.groupby("treatment")["recovery"].mean()
+```
+
+We can see that the results are similar to the ones obtained from the adjustment formula (up to some degree of uncertainty)
+
+## Randomizing the treament
+
+If we run a randomized controlled trial, the treatment is given at random
+
+```{python}
+sizes = []
+treatments = []
+recoveries = []
+for patient in range(patients_n):
+    u_0 = uniform(size=1)
+    u_1 = uniform(size=1)
+    u_2 = uniform(size=1)
+
+    size = "small" if u_0 < 0.51 else "large"
+    treatment = "A" if u_1 < 0.5 else "B"  # treatment is assigned at random
+    recovery = f(size, treatment, u_2)
+
+    sizes.append(size)
+    treatments.append(treatment)
+    recoveries.append(recovery)
+
+kidney_data_RCT = pd.DataFrame(
+    {"size": sizes, "treatment": treatments, "recovery": recoveries}
+)
+kidney_data_RCT.groupby("treatment")["recovery"].mean()
+```
+
+We can see that the results are similar to the ones obtained in the previous execution and from the adjustment formula (up to some degree of uncertainty)

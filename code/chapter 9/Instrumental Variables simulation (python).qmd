@@ -1,0 +1,158 @@
+---
+title: "Simulating a pricing problem - a walkthrough"
+format: ipynb
+jupyter: python3
+number-sections: true
+---
+
+# Data simulation: a predictor of the outcome
+
+```{python}
+from numpy.random import seed, normal, binomial, uniform
+from numpy import cov
+import statsmodels.formula.api as smf
+from pandas import DataFrame
+from seaborn import kdeplot
+
+seed(1234)
+
+n = 1000
+instrument_impact = 0.7
+
+confounder = binomial(1, 0.3, n)
+instrument = binomial(1, 0.5, n)
+treatment = (uniform(0, 1, n) <= instrument_impact*instrument + 0.4*confounder).astype(int)
+outcome = 30 - 2*treatment + 10 * confounder + normal(0, 2, n)
+
+df = DataFrame({
+    'instrument': instrument,
+    'treatment': treatment,
+    'outcome': outcome
+})
+```
+
+# Naive estimation
+
+```{python}
+smf.ols(formula='outcome ~ treatment', data=df).fit().summary()
+```
+
+```{python}
+outcome_1 = df[df.treatment==1].outcome.mean()
+outcome_0 = df[df.treatment==0].outcome.mean()
+print(outcome_1 - outcome_0)
+```
+
+# IV estimation
+
+```{python}
+cov(instrument, outcome)[0][1]/cov(instrument, treatment)[0][1]
+```
+
+```{python}
+model = smf.ols(formula='treatment ~ instrument', data=df).fit()
+df['treatment_prediction'] = model.predict(df)
+
+smf.ols(formula='outcome ~ treatment_prediction', data=df).fit().summary()
+```
+
+```{python}
+from linearmodels.iv.model import IV2SLS
+
+IV2SLS.from_formula('outcome ~ 1  + [treatment ~ instrument]',df).fit()
+```
+
+# Weak instruments
+
+
+```{python}
+def generate_data(instrument_impact, n):
+    confounder = binomial(1, 0.3, n)
+    instrument = binomial(1, 0.5, n)
+    treatment = (uniform(0, 1, n) <= instrument_impact*instrument + 0.4*confounder).astype(int)
+    outcome = 30 + instrument_impact*treatment + 10 * confounder + normal(0, 2, n)
+
+    return(DataFrame({
+        'instrument': instrument,
+        'treatment': treatment,
+        'outcome': outcome
+    }))
+
+def estimate_impact(df):
+    return(cov(df.instrument, df.outcome)[0][1]/cov(df.instrument, df.treatment)[0][1])
+```
+
+
+```{python}
+sim_n = 1000
+
+instrument_impact_1 = 0.3
+estimates_1 = []
+for i in range(sim_n):
+    df = generate_data(instrument_impact_1, n)
+    estimates_1.append(estimate_impact(df))
+```
+
+
+```{python}
+instrument_impact_2 = 0.1
+estimates_2 = []
+for i in range(sim_n):
+    df = generate_data(instrument_impact_2, n)
+    estimates_2.append(estimate_impact(df))
+```
+
+
+```{python}
+df_plot = DataFrame({
+    'estimate': estimates_1 + estimates_2,
+    'instrument_impact': [instrument_impact_1]*n + [instrument_impact_2]*n
+})
+kdeplot(data = df_plot, x='estimate', hue='instrument_impact')
+```
+
+# DoubleML
+
+
+```{python}
+import doubleml as dml
+from sklearn.linear_model import LinearRegression, LogisticRegression
+
+n = 10000
+df = generate_data(0.5, 1000)
+
+print(estimate_impact(df))
+df['x'] = 1
+
+ml_g = LinearRegression()
+ml_m = LogisticRegression(penalty=None)
+ml_r = LogisticRegression(penalty=None)
+
+obj_dml_data = dml.DoubleMLData(df, y_col='outcome', d_cols='treatment', z_cols='instrument')
+dml_iivm_obj = dml.DoubleMLIIVM(obj_dml_data, ml_g, ml_m, ml_r)
+dml_iivm_obj.fit().summary
+```
+
+
+```{python}
+import pandas as pd
+
+pd.read_csv("df.csv")
+df
+```
+
+
+```{python}
+ml_g = LinearRegression()
+ml_m = LogisticRegression(penalty=None)
+ml_r = LogisticRegression(penalty=None)
+
+obj_dml_data = dml.DoubleMLData(df, y_col='outcome', d_cols='treatment', z_cols='instrument')
+dml_iivm_obj = dml.DoubleMLIIVM(obj_dml_data, ml_g, ml_m, ml_r)
+dml_iivm_obj.fit().summary
+```
+
+
+```{python}
+cov(df.instrument, df.outcome)[0][1] / cov(df.instrument, df.treatment)[0][1]
+```

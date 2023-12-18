@@ -1,0 +1,62 @@
+---
+title: "Predictive efficiency"
+number-sections: true
+format:
+  html:
+    toc: true
+    toc-location: left
+    theme: default
+    embed-resources: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = "")
+```
+
+# Data simulation: a predictor of the outcome
+
+```{r}
+set.seed(1234)
+
+n <- 100
+
+z <- rnorm(n, sd=.5)
+x <- rnorm(n, sd=.5)
+y <- 3*x + 3*z + rnorm(n, sd=.5)
+```
+
+# Controling for a predictor of the outcome can reduce ATE's standard error 
+
+```{r}
+summary(lm(y ~ x))
+```
+
+```{r}
+summary(lm(y ~ x + z))
+```
+
+The standard error (variance of the estimation) of the second model is much lower than the first one. In this case, adding a covariate improves our estimation. 
+
+
+#  Data simulation: a predictor of the treatment variable
+
+
+```{r}
+z <- rnorm(n, sd=.5)
+x <- z + rnorm(n, sd=.1)
+y <- 3*x + rnorm(n, sd=.5)
+```
+
+# Controling for a predictor of the treatment increases ATE's standard error
+
+```{r}
+summary(lm(y ~ x))
+```
+
+# Obtaining a linear model of bonuses and ghosts
+
+```{r}
+summary(lm(y ~ x + z))
+```
+
+The standard error for the coefficient of 'x' is higher when controling for 'z'
