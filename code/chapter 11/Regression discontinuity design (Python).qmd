@@ -52,23 +52,18 @@ lower_cis = []
 upper_cis = []
 time_windows = arange(10, 3, -1)
 for time_window in time_windows:
-  ind = abs(time_points) < time_window
-  time_points_window = time_points[ind]
-  Y_window = Y[ind]
-  D_window = D[ind]
-  df = pd.DataFrame({'y': Y_window, 'd': D_window, 'time_points': time_points_window})
-  model = smf.ols(formula='y ~ d*time_points', data=df).fit()
-  d_coefs.append(model.params['d'])
-  lower_cis.append(model.conf_int().loc['d'][0])
-  upper_cis.append(model.conf_int().loc['d'][1])
+    ind = abs(time_points) < time_window
+    time_points_window = time_points[ind]
+    Y_window = Y[ind]
+    D_window = D[ind]
+    df = pd.DataFrame({"y": Y_window, "d": D_window, "time_points": time_points_window})
+    model = smf.ols(formula="y ~ d*time_points", data=df).fit()
+    d_coefs.append(model.params["d"])
+    lower_cis.append(model.conf_int().loc["d"][0])
+    upper_cis.append(model.conf_int().loc["d"][1])
 
-results = pd.DataFrame({
-    'time_window': time_windows,
-    'd': d_coefs,
-    '2.5%': lower_cis,
-    '97.5%': upper_cis
-})
-results
+pd.DataFrame(
+    {"time_window": time_windows, "d": d_coefs, "2.5%": lower_cis, "97.5%": upper_cis}
 ```
 
 

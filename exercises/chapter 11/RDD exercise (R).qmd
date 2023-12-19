@@ -1,0 +1,53 @@
+---
+title: "Difference in Differences"
+number-sections: true
+format:
+  html:
+    toc: true
+    toc-location: left
+    theme: default
+    embed-resources: true
+---
+
+# Data simulation
+
+Data obtained from [google trends](https://trends.google.com/trends/explore?date=2015-11-01%202016-02-01&geo=US&q=%2Fm%2F0fdv3&hl=en-US). Google Trends are calculated based on resampling, so the data might be slightly different every time you download it.
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Reading the data
+
+```{r message=FALSE}
+library(rdrobust)
+library(ggplot2)
+data <- read.csv('gtrends_rdd.csv')
+
+release_day <- which(data$Day == "2015-12-18")
+data$period <- 1:nrow(data) - release_day
+```
+
+Ploting the data
+
+```{r}
+ggplot(data, aes(period, III_interest)) +
+  geom_line() + 
+  ylab('III interest') +
+  ggtitle('Google Trends interest of the movie III')
+```
+
+Applying RDD with the `rdrobust` library.
+
+
+```{r}
+summary(rdrobust(data$III_interest, data$period))
+```
+
+```{r, echo=FALSE}
+library(glue)
+res <- glue("{round(result$Estimate[1], 2)} ({round(result$ci[1, 1], 2)}, {round(result$ci[1, 2], 2)})")
+```
+
+The estimated causal impact of the release is `r res`

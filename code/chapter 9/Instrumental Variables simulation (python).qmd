@@ -1,5 +1,5 @@
 ---
-title: "Simulating a pricing problem - a walkthrough"
+title: "Instrumental Variables"
 format: ipynb
 jupyter: python3
 number-sections: true
@@ -13,28 +13,28 @@ from numpy import cov
 import statsmodels.formula.api as smf
 from pandas import DataFrame
 from seaborn import kdeplot
-
-seed(1234)
+import doubleml as dml
+from sklearn.linear_model import LinearRegression, LogisticRegression
+from linearmodels.iv.model import IV2SLS
 
 n = 1000
 instrument_impact = 0.7
+treatment_effect = -2
 
 confounder = binomial(1, 0.3, n)
 instrument = binomial(1, 0.5, n)
-treatment = (uniform(0, 1, n) <= instrument_impact*instrument + 0.4*confounder).astype(int)
-outcome = 30 - 2*treatment + 10 * confounder + normal(0, 2, n)
+treatment = (
+    uniform(0, 1, n) <= instrument_impact * instrument + 0.4 * confounder
+).astype(int)
+outcome = 30 + treatment_effect * treatment + 10 * confounder + normal(0, 2, n)
 
-df = DataFrame({
-    'instrument': instrument,
-    'treatment': treatment,
-    'outcome': outcome
-})
+df = DataFrame({"instrument": instrument, "treatment": treatment, "outcome": outcome})
 ```
 
 # Naive estimation
 
 ```{python}
-smf.ols(formula='outcome ~ treatment', data=df).fit().summary()
+smf.ols(formula="outcome ~ treatment", data=df).fit().summary()
 ```
 
 ```{python}
@@ -49,6 +49,7 @@ print(outcome_1 - outcome_0)
 cov(instrument, outcome)[0][1]/cov(instrument, treatment)[0][1]
 ```
 
+# Two-Stage Least Squares Estimation
 ```{python}
 model = smf.ols(formula='treatment ~ instrument', data=df).fit()
 df['treatment_prediction'] = model.predict(df)
@@ -57,7 +58,6 @@ smf.ols(formula='outcome ~ treatment_prediction', data=df).fit().summary()
 ```
 
 ```{python}
-from linearmodels.iv.model import IV2SLS
 
 IV2SLS.from_formula('outcome ~ 1  + [treatment ~ instrument]',df).fit()
 ```
@@ -115,9 +115,6 @@ kdeplot(data = df_plot, x='estimate', hue='instrument_impact')
 
 
 ```{python}
-import doubleml as dml
-from sklearn.linear_model import LinearRegression, LogisticRegression
-
 n = 10000
 df = generate_data(0.5, 1000)
 
@@ -132,26 +129,6 @@ obj_dml_data = dml.DoubleMLData(df, y_col='outcome', d_cols='treatment', z_cols=
 dml_iivm_obj = dml.DoubleMLIIVM(obj_dml_data, ml_g, ml_m, ml_r)
 dml_iivm_obj.fit().summary
 ```
-
-
-```{python}
-import pandas as pd
-
-pd.read_csv("df.csv")
-df
-```
-
-
-```{python}
-ml_g = LinearRegression()
-ml_m = LogisticRegression(penalty=None)
-ml_r = LogisticRegression(penalty=None)
-
-obj_dml_data = dml.DoubleMLData(df, y_col='outcome', d_cols='treatment', z_cols='instrument')
-dml_iivm_obj = dml.DoubleMLIIVM(obj_dml_data, ml_g, ml_m, ml_r)
-dml_iivm_obj.fit().summary
-```
-
 
 ```{python}
 cov(df.instrument, df.outcome)[0][1] / cov(df.instrument, df.treatment)[0][1]

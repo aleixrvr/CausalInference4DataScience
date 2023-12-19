@@ -1,0 +1,64 @@
+---
+title: "SC exercise"
+number-sections: true
+format:
+  html:
+    toc: true
+    toc-location: left
+    theme: default
+    embed-resources: true
+---
+
+# Data simulation
+
+Data obtained from [google trends](https://trends.google.com/trends/explore?date=2015-01-01%202016-12-01&geo=US&q=Lord%20of%20the%20Rings,%2Fm%2F0fdv3&hl=en). Google Trends are calculated based on resampling, so the data might be slightly different every time you download it.
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Reading the data
+
+```{r message=FALSE}
+library(CausalImpact)
+library(data.table)
+library(ggplot2)
+
+weeks_post <- 2
+
+data <- read.csv('gtrends_sc.csv')
+setDT(data)
+release_day <- which(data$Week == "2015-12-20")
+```
+
+Ploting the data
+
+```{r}
+data_plot <- melt(
+  data, id.vars = 'Week', value.name = 'Interest', variable.name = 'Movie'
+)
+data_plot$Week <- as.Date(data_plot$Week)
+ggplot(data_plot, aes(Week, Interest, color=Movie)) +
+  geom_line() +
+  ylab('Interest') +
+  xlab('Week') +
+  ggtitle('Google Trends interest')
+```
+
+Applying SC with the `CausalImpact` library.
+
+
+```{r}
+results <- CausalImpact(
+  data[, .(y = III, x1 = LoTR)], 
+  c(1, release_day - 1), c(release_day, release_day + weeks_post)
+)
+```
+
+```{r, echo=FALSE}
+library(glue)
+res <- glue("{round(results$summary$AbsEffect[2], 2)} ({round(results$summary$AbsEffect.lower[2], 2)}, {round(results$summary$AbsEffect.upper[2], 2)})")
+```
+
+The estimated accumulative causal impact on the interest over the next `r weeks_post` weaks after the release is `r res`.

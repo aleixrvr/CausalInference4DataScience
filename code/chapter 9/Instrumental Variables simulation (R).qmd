@@ -1,5 +1,5 @@
 ---
-title: "Predictive efficiency"
+title: "Instrumental Variables"
 number-sections: true
 format:
   html:
@@ -9,54 +9,131 @@ format:
     embed-resources: true
 ---
 
+
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, comment = "")
-```
+knitr::opts_chunk$set(
+  echo = TRUE,
+  comment="")
 
-# Data simulation: a predictor of the outcome
-
-```{r}
+library(AER)
+library(ggplot2)
+library(DoubleML)
+library(mlr3learners)
 set.seed(1234)
-
-n <- 100
-
-z <- rnorm(n, sd=.5)
-x <- rnorm(n, sd=.5)
-y <- 3*x + 3*z + rnorm(n, sd=.5)
-```
-
-# Controling for a predictor of the outcome can reduce ATE's standard error 
-
-```{r}
-summary(lm(y ~ x))
 ```
 
 ```{r}
-summary(lm(y ~ x + z))
+n <- 10000
+treatment_effect <- -2
+instrument_effect <- 0.7
+
+confounder <- rbinom(n, 1, 0.3)
+instrument <- rbinom(n, 1, 0.5)
+treatment <- as.numeric(runif(n) <= instrument_effect*instrument + 0.4*confounder)
+outcome <- 30 + treatment_effect*treatment + 10 * confounder + rnorm(n, sd=2)
+df <- data.frame(instrument, treatment, outcome)
 ```
 
-The standard error (variance of the estimation) of the second model is much lower than the first one. In this case, adding a covariate improves our estimation. 
+# Naive Estimation
+```{r}
+print(mean(df[df$treatment==1, 'outcome']) - mean(df[df$treatment==0, 'outcome']))
+summary(lm(outcome~treatment, data=df))
+```
 
+# IV estimation
 
-#  Data simulation: a predictor of the treatment variable
+```{r}
+cov(outcome, instrument)/cov(treatment, instrument)
+```
 
 
 ```{r}
-z <- rnorm(n, sd=.5)
-x <- z + rnorm(n, sd=.1)
-y <- 3*x + rnorm(n, sd=.5)
+model <- ivreg(outcome~treatment|instrument, data=df)
+summary(model)
 ```
 
-# Controling for a predictor of the treatment increases ATE's standard error
+## Two-Stage Least Squares Estimation
 
 ```{r}
-summary(lm(y ~ x))
+model_1 <- lm(treatment~instrument, data=df)
+treatment_prediction <- predict(model_1, data=df)
+lm(outcome~treatment_prediction)
 ```
 
-# Obtaining a linear model of bonuses and ghosts
+## Weak Instruments
 
 ```{r}
-summary(lm(y ~ x + z))
+generate_data <- function(instrument_effect, n){
+  confounder <- rbinom(n, 1, 0.3)
+  instrument <- rbinom(n, 1, 0.5)
+  treatment <- as.numeric(runif(n) <= instrument_effect*instrument + 0.4*confounder)
+  outcome <- 30 + + treatment_effect*treatment + 10 * confounder + rnorm(n, sd=2)
+  
+  data.frame(instrument, treatment, outcome)
+}
+
+estimate_impact <- function(df){
+  cov(df$outcome, df$instrument)/cov(df$treatment, df$instrument)
+}
 ```
 
-The standard error for the coefficient of 'x' is higher when controling for 'z'
+```{r}
+sim_n <- 1000
+instrument_effect_1 <- 0.3
+estimates <- c()
+for(i in 1:sim_n){
+  df <- generate_data(instrument_effect_1, n)
+  estimates <- c(estimates, estimate_impact(df))
+}
+
+results <- data.frame(estimates=estimates, instrument_effect=instrument_effect_1)
+```
+
+```{r}
+instrument_effect_2 <- 0.1
+estimates <- c()
+for(i in 1:sim_n){
+  df <- generate_data(instrument_effect_2, n)
+  estimates <- c(estimates, estimate_impact(df))
+}
+
+results <- rbind(
+  results, data.frame(estimates=estimates, instrument_effect=instrument_effect_2)
+)
+results$instrument_effect <- factor(results$instrument_effect)
+```
+
+```{r}
+ggplot(results, aes(estimates, fill=instrument_effect)) +
+  geom_density(alpha=0.2) +
+  geom_vline(xintercept = treatment_effect) +
+  ggtitle('Distribution of the estimation of the causal effect with IVs')
+```
+
+## DoubleML
+
+```{r}
+df <- generate_data(instrument_effect = 0.5, n)
+df['x'] <- 1
+
+obj_dml_data = DoubleMLData$new(
+  df, y_col="outcome", d_col = "treatment", z_cols= "instrument"
+)
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+ml_g = lrn("regr.lm")
+ml_m = lrn("classif.log_reg")
+ml_r = ml_m$clone()
+
+iv_2 = DoubleMLIIVM$new(obj_dml_data, ml_g, ml_m, ml_r)
+iv_2$fit()
+```
+
+
+```{r}
+print(iv_2)
+print(estimate_impact(df))
+```
+

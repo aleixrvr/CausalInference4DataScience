@@ -15,7 +15,7 @@ format:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r warnings=False}
+```{r message=FALSE}
 library(data.table)
 library(ggplot2)
 library(CausalImpact)
@@ -25,16 +25,12 @@ library(tidyr)
 ```{r}
 set.seed(1234)
 periods_n <- 15
-time_points <- seq(-periods_n, periods_n)
 impact <- 1000
 
-n <- length(time_points)
 time_points <- seq(-periods_n, periods_n)
+n <- length(time_points)
 seasonality <- -cos(time_points/(2*pi))
-```
 
-
-```{r}
 D <- as.numeric(time_points >= 0)
 Y_0 <- 500 + 100*seasonality + rnorm(n, sd=50)
 Y_1 <- Y_0 + impact * D / (abs(time_points) + 1)

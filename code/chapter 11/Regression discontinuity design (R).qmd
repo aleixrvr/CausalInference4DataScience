@@ -124,8 +124,6 @@ for(time_window in time_windows){
 }
 
 colnames(results)[2] <- 'Estimate'
-low <- sym('2.5 %')
-high <- sym('2.5 %')
 
 res_plot <- ggplot(results, aes(
   time_window, Estimate, ymin = !!sym('2.5 %'), ymax = !!sym('97.5 %'))
