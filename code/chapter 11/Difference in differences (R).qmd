@@ -1,7 +1,16 @@
 ---
-title: "DiD"
-output: html_document
+title: "Difference in Differences"
+number-sections: true
+format:
+  html:
+    toc: true
+    toc-location: left
+    theme: default
+    embed-resources: true
 ---
+
+# Data simulation
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -14,10 +23,7 @@ set.seed(1234)
 
 impact <- 200
 n_group <- 10
-```
 
-
-```{r}
 time_points_base <- c(0, 1)
 n <- length(time_points_base)
 seasonality_base <- -cos(time_points_base/(2*pi))
@@ -31,22 +37,25 @@ Y_0 <- 500 + 200*D + 100*seasonality + rnorm(4*n_group, sd=100)
 Y_1 <- Y_0 + D*time_points*impact
 Y <- D*Y_1 + (1-D)*Y_0
 
+df_observed <- data.frame(
+  id, time_points, D, Y
+)
+```
+
+# Plots
+
+```{r}
 df_all <- data.frame(
   id, time_points, D, seasonality, Y_0, Y_1, Y
 )
 
-df_observed <- df_all[, c('id', 'time_points', 'D', 'Y')]
-```
-
-
-```{r}
 res_plot <- ggplot(df_observed, aes(time_points, Y, color=as.factor(D))) +
   geom_point() +
   geom_smooth(method=lm, se=FALSE) +
   guides(color=guide_legend(title="D")) +
   ylab('Number of views') 
   
-# ggsave('../../../images/ch11-dids_observed.png', res_plot)
+# ggsave('ch11-dids_observed.png', res_plot)
 res_plot
 ```
 
@@ -72,16 +81,8 @@ res_plot <- ggplot(df_all, aes(time_points, color=as.factor(D))) +
     col = "black"
   )
 
-# ggsave('../../../images/ch11-dids_terms.png', res_plot)
+# ggsave('images/ch11-dids_terms.png', res_plot)
 res_plot
-# ggplot(df_observed, aes(time_points, Y, color=as.factor(D))) +
-#   geom_point() +
-#   stat_summary(
-#     aes(time_points, Y, group=as.factor(D)),
-#     geom = "point",
-#     fun.y = "mean",
-#     col = "black"
-#   )
 ```
 
 
@@ -96,7 +97,7 @@ res_plot <- ggplot(df_all, aes(time_points, color=as.factor(D))) +
   guides(color=guide_legend(title="D")) +
   ylab('Number of views')
 
-ggsave('../../../images/ch11-dids_counterfactual.png', res_plot)
+# ggsave('ch11-dids_counterfactual.png', res_plot)
 res_plot
 ```
 
@@ -109,11 +110,11 @@ res_plot <- ggplot(df_all, aes(time_points, color=as.factor(D))) +
   guides(color=guide_legend(title="D")) +
   ylab('Number of views')
 
-ggsave('../../../images/ch11-dids_atet.png', res_plot)
+# ggsave('ch11-dids_atet.png', res_plot)
 res_plot
 ```
 
-# Method 1
+# DiD ATET estimation with the direct method
 
 ```{r}
 diff_1 <- mean(df_observed[
@@ -132,14 +133,14 @@ diff_1 - diff_0
 ```
 
 
-# Method 2
+# DiD ATET with linear models
 
 ```{r}
 model <- lm(Y~D*time_points, data=df_observed)
-as.data.frame(cbind(
-  t(coef(model)['D:time_points']), 
-  t(confint(model)[2, ])))
+summary(model)
 ```
+
+# DiD ATET with linear models with additional covariates
 
 ```{r}
 n_a <- floor(n_group/4)
@@ -158,44 +159,13 @@ df_observed_age <- data.frame(
 )
 
 model <- lm(Y~D*time_points + A, data=df_observed_age)
-as.data.frame(cbind(
-  t(coef(model)['D:time_points']), 
-  t(confint(model)[2, ])))
+summary(model)
 ```
 
+# DiD ATET with the did package
 
-# method 3
 ```{r}
 att_gt(
   yname='Y', tname = 'time_points', idname = 'id', gname = 'D',
   data = df_observed)
 ```
-
-```{r}
-n_a <- floor(n_group/4)
-A <- c(rep(1, n_a*2), rep(0, 2*(n_group - n_a)))
-n_a <- floor(n_group/2)
-A <- c(A, rep(1, n_a*2), rep(0, 2*(n_group - n_a)))
-
-Y_0_age <- Y_0 - 50 * A
-Y_1_age <- Y_1 - 50 * A
-Y_age <- D*Y_1_age + (1-D)*Y_0_age
-
-df_observed_age <- data.frame(
-  id, time_points, D, Y=Y_age, A
-)
-
-att_gt(
-  yname='Y', tname = 'time_points', idname = 'id', gname = 'D',
-  data = df_observed_age)
-```
-
-
-```{r}
-att_gt(
-  yname='Y', tname = 'time_points', idname = 'id', gname = 'D',
-  xformla = ~A,
-  data = df_observed_age)
-```
-
-

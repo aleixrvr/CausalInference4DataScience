@@ -1,13 +1,21 @@
 ---
 title: "Synthetic Controls"
-output: html_document
+number-sections: true
+format:
+  html:
+    toc: true
+    toc-location: left
+    theme: default
+    embed-resources: true
 ---
+
+# Data simulation
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r warnings=False}
 library(data.table)
 library(ggplot2)
 library(CausalImpact)
@@ -25,12 +33,6 @@ time_points <- seq(-periods_n, periods_n)
 seasonality <- -cos(time_points/(2*pi))
 ```
 
-```{r}
-res_plot <- qplot(time_points, seasonality, geom = 'line')
-
-ggsave('../../../images/ch11-seasonality.png', res_plot)
-res_plot
-```
 
 ```{r}
 D <- as.numeric(time_points >= 0)
@@ -50,18 +52,16 @@ res_plot <- ggplot(df_plot, aes(time, value, color=variable)) +
   geom_line() +
   ylab('Number of views')
 
-ggsave('../../../images/ch11-syntheticcontrols.png', res_plot)
+#ggsave('ch11-syntheticcontrols.png', res_plot)
 res_plot
 ```
 
+# Executing the CausalImpact Analysis
 
-
-```{r}
-pre.period <- c(-periods_n, -1) + periods_n + 1
-post.period <- c(0, periods_n) + periods_n + 1
-```
 
 ```{r comment=""}
+pre.period <- c(-periods_n, -1) + periods_n + 1
+post.period <- c(0, periods_n) + periods_n + 1
 estimated_impact <- CausalImpact(df, pre.period, post.period)
 estimated_impact
 ```
@@ -69,7 +69,7 @@ estimated_impact
 ```{r}
 res_plot <- plot(estimated_impact)
 
-ggsave('../../../images/ch11-causalimpact.png', res_plot)
+#ggsave('ch11-causalimpact.png', res_plot)
 res_plot
 ```
 
@@ -78,6 +78,7 @@ inds = D > 0
 mean(impact * D[inds] / (abs(time_points[inds]) + 1))
 ```
 
+# Executing the CausalImpact Analysis
 
 ```{r comment=""}
 pre.period <- c(-periods_n, -1) + periods_n + 1

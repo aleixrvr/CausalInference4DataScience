@@ -1,0 +1,81 @@
+---
+title: "Regression Discontinuity Design"
+format: ipynb
+jupyter: python3
+number-sections: true
+---
+
+
+# Data simulation: a predictor of the outcome
+
+```{python}
+from numpy.random import normal, seed
+from numpy import abs, cos, mean, pi, arange
+import statsmodels.formula.api as smf
+import pandas as pd
+from rdrobust import rdrobust
+
+seed(1234)
+
+periods_n = 15
+impact = 1000
+
+time_points = arange(-periods_n, periods_n + 1)
+n = len(time_points)
+seasonality = -cos(time_points / (2 * pi))
+
+D = (time_points >= 0).astype(int)
+Y_0 = 500 + 100 * seasonality + normal(size=n, scale=50)
+Y_1 = Y_0 + impact * D / (abs(time_points) + 1)
+Y = D * Y_1 + (1 - D) * Y_0
+```
+
+
+
+# Difference of means method
+
+```{python}
+results = []
+time_windows = arange(10, 1, -1)
+for time_window in time_windows:
+    ind = abs(time_points) < time_window
+    results.append(mean(Y[ind & D == 1]) - mean(Y[ind & D == 0]))
+
+pd.DataFrame({"time_window": time_windows, "estimate": results})
+```
+
+# Linear models
+
+```{python}
+d_coefs = []
+lower_cis = []
+upper_cis = []
+time_windows = arange(10, 3, -1)
+for time_window in time_windows:
+  ind = abs(time_points) < time_window
+  time_points_window = time_points[ind]
+  Y_window = Y[ind]
+  D_window = D[ind]
+  df = pd.DataFrame({'y': Y_window, 'd': D_window, 'time_points': time_points_window})
+  model = smf.ols(formula='y ~ d*time_points', data=df).fit()
+  d_coefs.append(model.params['d'])
+  lower_cis.append(model.conf_int().loc['d'][0])
+  upper_cis.append(model.conf_int().loc['d'][1])
+
+results = pd.DataFrame({
+    'time_window': time_windows,
+    'd': d_coefs,
+    '2.5%': lower_cis,
+    '97.5%': upper_cis
+})
+results
+```
+
+
+# Rdrobust library
+
+
+```{python}
+rdrobust(Y, time_points)
+```
+

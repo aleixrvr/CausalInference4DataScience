@@ -1,43 +1,42 @@
 ---
-title: "RDDs"
-output: html_document
+title: "Regression Discontinuity Design"
+number-sections: true
+format:
+  html:
+    toc: true
+    toc-location: left
+    theme: default
+    embed-resources: true
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, comment = "")
 ```
+
+# Data simulation: a predictor of the outcome
 
 ```{r}
 library(ggplot2)
 library(glue)
 library(rdrobust)
-```
 
-```{r}
 set.seed(1234)
+
 periods_n <- 15
-time_points <- seq(-periods_n, periods_n)
 impact <- 1000
 
-n <- length(time_points)
 time_points <- seq(-periods_n, periods_n)
+n <- length(time_points)
 seasonality <- -cos(time_points/(2*pi))
-```
 
-```{r}
 res_plot <- qplot(time_points, seasonality, geom = 'line')
+# ggsave('ch11-seasonality.png', res_plot)
 
-ggsave('../../../images/ch11-seasonality.png', res_plot)
-res_plot
-```
-
-```{r}
 D <- as.numeric(time_points >= 0)
 Y_0 <- 500 + 100*seasonality + rnorm(n, sd=50)
 Y_1 <- Y_0 + impact * D / (abs(time_points) + 1)
 Y <- D*Y_1 + (1-D)*Y_0
 ```
-
 
 ```{r}
 df_observed <- data.frame(
@@ -50,12 +49,10 @@ res_plot <- ggplot(df_observed, aes(time, Y)) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
   ylab('Number of views of the 3rd Star Wars movie')
 
-ggsave('../../../images/ch11-rdd_observed.png', res_plot)
+# ggsave('ch11-rdd_observed.png', res_plot)
 res_plot
 ```
 
-
-Let's check that the impact is correct. It should coincide with the maximum value of the difference of the time series `r max(abs(Y_0-Y_1))`
 
 ```{r}
 df_po <- data.frame(
@@ -69,12 +66,12 @@ res_plot <- ggplot(df_po, aes(time, y, color=potential_outcomes, shape=potential
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
   ylab('POs of the Number of views of the 3rd Star Wars movie')
 
-ggsave('../../../images/ch11-rdd_potential_outcomes.png', res_plot)
+# ggsave('ch11-rdd_potential_outcomes.png', res_plot)
 res_plot
 ```
 
 
-# Method 1
+# Difference of means method
 
 ```{r}
 results <- c()
@@ -90,11 +87,11 @@ res_plot <- ggplot(df_plot, aes(time_window, estimation)) +
   geom_hline(yintercept = 1000, color='green') +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 1200)) 
 
-ggsave('../../../images/ch11-mean_evolution.png', res_plot)
+# ggsave('ch11-mean_evolution.png', res_plot)
 res_plot
 ```
 
-# Method 2
+# Linear models
 
 ```{r}
 df_observed_ <- df_observed
@@ -105,7 +102,7 @@ res_plot <- ggplot(df_observed_, aes(time, Y, color=D)) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
   ylab('Number of views of the 3rd Star Wars movie')
 
-ggsave('../../../images/ch11-rdd_linear.png', res_plot)
+# ggsave('ch11-rdd_linear.png', res_plot)
 res_plot
 ```
 
@@ -139,7 +136,7 @@ res_plot <- ggplot(results, aes(
   ggtitle(glue("Best Estimate: {round(max(results[, 'Estimate']), 2)}"))
 
 
-ggsave('../../../images/ch11-linear_evolution.png', res_plot)
+# ggsave('ch11-linear_evolution.png', res_plot)
 res_plot
 ```
 
@@ -149,35 +146,15 @@ results[results$time_window==4, ]
 
 
 
-# Method 3
+# Rdrobust library
 
 ```{r}
-png('../../../images/ch11-rdplot.png')
+png('ch11-rdplot.png')
 rdplot(Y, time_points)
 dev.off()
 ```
 
-
 ```{r}
 summary(rdrobust(Y, time_points))
-```
-
-
-```{r}
-z <- seq(-2, 2, 0.01)
-y <- ifelse(abs(z) < 1, 1, 0)
-res_plot <- qplot(z, y)
-
-ggsave('../../../images/ch11-uniform.png', res_plot)
-res_plot
-```
-
-```{r}
-z <- seq(-2, 2, 0.01)
-y <- ifelse(abs(z) < 1, 1 - abs(z), 0)
-res_plot <- qplot(z, y)
-
-ggsave('../../../images/ch11-triangular.png', res_plot)
-res_plot
 ```
 

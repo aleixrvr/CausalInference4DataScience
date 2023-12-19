@@ -1,0 +1,62 @@
+---
+title: "Synthetic Controls"
+format: ipynb
+jupyter: python3
+number-sections: true
+---
+
+# Data simulation
+
+```{python}
+from numpy.random import normal, seed
+from numpy import cos, mean, pi, arange, abs
+import pandas as pd
+from causalimpact import CausalImpact
+
+seed(1234)
+
+periods_n = 15
+impact = 1000
+
+time_points = arange(-periods_n, periods_n + 1)
+n = len(time_points)
+seasonality = -cos(time_points / (2 * pi))
+
+D = (time_points >= 0).astype(int)
+Y_0 = 500 + 100 * seasonality + normal(size=n, scale=50)
+Y_1 = Y_0 + impact * D / (abs(time_points) + 1)
+Y = D * Y_1 + (1 - D) * Y_0
+
+X_1 = 400 + 100 * seasonality + normal(size=n, scale=20)
+X_2 = 700 + 80 * seasonality + normal(size=n, scale=60)
+
+df = pd.DataFrame({"Y": Y, "X_1": X_1, "X_2": X_2, "time": time_points})
+```
+
+# Executing the CausalImpact Analysis
+
+```{python}
+pre_period = [1, periods_n]
+post_period = [periods_n + 1, 2 * periods_n + 1]
+
+estimated_impact = CausalImpact(df, pre_period, post_period)
+estimated_impact.run()
+estimated_impact.summary()
+```
+
+
+```{python}
+inds = D > 0
+mean(impact * D[inds] / (abs(time_points[inds]) + 1))
+```
+
+# Executing the CausalImpact Analysis
+
+```{python}
+pre_period = [1, periods_n]
+post_period = [periods_n + 1, periods_n + 1]
+
+estimated_impact = CausalImpact(df, pre_period, post_period)
+estimated_impact.run()
+estimated_impact.summary()
+```
