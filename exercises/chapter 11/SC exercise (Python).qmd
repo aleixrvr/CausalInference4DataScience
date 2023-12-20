@@ -1,0 +1,48 @@
+---
+title: "Difference in Differences"
+format: ipynb
+jupyter: python3
+number-sections: true
+---
+
+# Data simulation
+
+Data obtained from [google trends](https://trends.google.com/trends/explore?date=2015-01-01%202016-12-01&geo=US&q=Lord%20of%20the%20Rings,%2Fm%2F0fdv3&hl=en). Google Trends are calculated based on resampling, so the data might be slightly different every time you download it.
+
+
+Reading the data
+
+```{python message=FALSE}
+import pandas as pd
+import causalimpact
+import seaborn as sns
+from numpy import where
+
+weeks_post = 2
+
+data = pd.read_csv("gtrends_sc.csv")
+release_day = where(data.Week == "2015-12-20")[0][0]
+data["Week"] = pd.to_datetime(data["Week"])
+```
+
+Ploting the data
+
+```{python}
+sns.lineplot(x="Week", y="III", data=data)
+sns.lineplot(x="Week", y="LoTR", data=data)
+```
+
+Applying SC with the `CausalImpact` library.
+
+```{python}
+data_CI = data[["III", "LoTR"]]
+data_CI.columns = ["y", "x1"]
+pre_period = [0, release_day - 1]
+post_period = [release_day, release_day + weeks_post]
+
+estimated_impact = causalimpact.fit_causalimpact(data_CI, pre_period, post_period)
+print(causalimpact.summary(estimated_impact, output_format="summary"))
+```
+
+
+The impact of the release on the interest of the III is 179.3 (148.3, 208.8).

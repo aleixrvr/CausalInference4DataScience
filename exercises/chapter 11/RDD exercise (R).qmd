@@ -42,12 +42,12 @@ Applying RDD with the `rdrobust` library.
 
 
 ```{r}
-summary(rdrobust(data$III_interest, data$period))
+results <- rdrobust(data$III_interest, data$period)
 ```
 
 ```{r, echo=FALSE}
 library(glue)
-res <- glue("{round(result$Estimate[1], 2)} ({round(result$ci[1, 1], 2)}, {round(result$ci[1, 2], 2)})")
+res <- glue("{round(results$Estimate[1], 2)} ({round(results$ci[1, 1], 2)}, {round(results$ci[1, 2], 2)})")
 ```
 
 The estimated causal impact of the release is `r res`

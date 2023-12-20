@@ -1,0 +1,39 @@
+---
+title: "Difference in Differences"
+format: ipynb
+jupyter: python3
+number-sections: true
+---
+
+# Data simulation
+
+Data obtained from [google trends](https://trends.google.com/trends/explore?date=2015-11-01%202016-02-01&geo=US&q=%2Fm%2F0fdv3&hl=en-US). Google Trends are calculated based on resampling, so the data might be slightly different every time you download it.
+
+Reading the data
+
+```{python message=FALSE}
+import pandas as pd
+from rdrobust import rdrobust
+import seaborn as sns
+from numpy import where, arange
+
+
+data = pd.read_csv("gtrends_rdd.csv")
+release_day = where(data.Day == "2015-12-18")[0][0]
+data["period"] = arange(data.shape[0]) - release_day
+```
+
+Ploting the data
+
+```{python}
+sns.lineplot(x="period", y="III_interest", data=data)
+```
+
+Applying RDD with the `rdrobust` library.
+
+
+```{python}
+rdrobust(data.III_interest, data.period)
+```
+
+The estimated causal impact of the release is 40.11 (15.98, 64.25).
