@@ -1,0 +1,85 @@
+---
+title: "ATE's confidence intervals estimation for the kidney stones data set"
+number-sections: true
+format:
+  html:
+    toc: true
+    toc-location: left
+    theme: default
+    embed-resources: true
+---
+
+# Data simulation
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE}
+library(glue)
+
+set.seed(1234)
+
+resample_n <- 2000
+
+kidney <- data.frame(
+  number = c(87, 270, 263, 80),
+  recovery = c(81, 234, 192, 50),
+  treatment = c('A', 'B', 'A', 'B'),
+  size = c('Small', 'Small', 'Large', 'Large')
+) 
+
+recoveries = c()
+treatments = c()
+sizes = c()
+for(row_n in 1:nrow(kidney)){
+  obs <- kidney[row_n, 'number']
+  treatments <- c(treatments, rep(kidney[row_n, 'treatment'], obs))
+  recoveries <- c(recoveries, rep(1, kidney[row_n, 'recovery']))
+  recoveries <- c(recoveries, rep(0, obs - kidney[row_n, 'recovery']))
+  sizes <- c(sizes, rep(kidney[row_n, 'size'], obs))
+}
+
+kidney <- data.frame(treatment = treatments, recovery = recoveries, size = sizes)
+```
+
+Functions to calculate the adjustment formula and resampling the data set.
+
+```{r}
+adjustment <- function(df, value) {
+    treatment <- df$treatment
+    size <- df$size
+    recovery <- df$recovery
+    ind_treatment <- treatment == value
+    sizes <- unique(size)
+
+    adjusted_prob <- 0
+    for (z in sizes) {
+        ind_size <- size == z
+        ind <- ind_treatment & ind_size
+        adjusted_prob <- adjusted_prob + mean(recovery[ind]) * mean(ind_size)
+    }
+
+    return(adjusted_prob)
+}
+
+resample <- function(kidney){
+  ind <- sample(nrow(kidney), replace=TRUE)
+  kidney[ind, ]
+}
+```
+
+# Bootstrapping
+
+```{r}
+ates <- c()
+for(i in 1:resample_n){
+  kidney_resample <- resample(kidney)
+  ate <- adjustment(kidney_resample, 'A') - adjustment(kidney_resample, 'B')
+  ates <- c(ates, ate)
+}
+
+result <- glue("{round(mean(ates), 3)} ({round(quantile(ates, 0.025), 3)}, {round(quantile(ates, 0.975), 3)})")
+```
+
+The estimated ATE is `r result`

@@ -1,0 +1,41 @@
+---
+title: "FWL strategy"
+number-sections: true
+format:
+  html:
+    toc: true
+    toc-location: left
+    theme: default
+    embed-resources: true
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  comment="")
+```
+
+# Data simulation
+
+```{r}
+set.seed(1234)
+n <- 100
+confounder <- runif(n)
+treatment <- -3*confounder + rnorm(n)
+outcome <- -2*confounder + 5*treatment + rnorm(n)
+df <- data.frame(confounder, treatment, outcome)
+```
+
+# Linear estimation controlling for confounders
+
+```{r}
+coefficients(lm(outcome ~ confounder + treatment ))
+```
+
+# FWL strategy 
+```{r}
+res_y <- outcome - predict(lm(outcome~confounder, df), df)
+res_d <- treatment - predict(lm(treatment~confounder, df), df)
+coefficients(lm(res_y ~ res_d))
+```

@@ -1,0 +1,76 @@
+---
+title: "Difference in Differences"
+format: ipynb
+jupyter: python3
+number-sections: true
+---
+
+# Data simulation
+
+```{python}
+import pandas as pd
+from numpy import unique, mean, quantile, array, round
+from numpy.random import choice, seed
+
+seed(1234)
+bootstrap_n = 2000
+```
+
+```{python}
+kidney = pd.DataFrame(
+    {
+        "number": [87, 270, 263, 80],
+        "recovery": [81, 234, 192, 50],
+        "treatment": ["A", "B", "A", "B"],
+        "size": ["Small", "Small", "Large", "Large"],
+    }
+) 
+```
+
+```{python}
+treatments = []
+sizes = []
+recoveries = []
+
+for i in range(kidney.shape[0]):
+    obs = kidney.iloc[i]["number"]
+    treatments += [kidney.iloc[i]["treatment"]] * obs
+    sizes += [kidney.iloc[i]["size"]] * obs
+    recoveries += [1] * kidney.iloc[i]["recovery"] + [0] * (
+        obs - kidney.iloc[i]["recovery"]
+    )
+
+kidney = pd.DataFrame({"treatment": treatments, "size": sizes, "recovery": recoveries})
+```
+
+```{python}
+def adjustment(df, value):
+    treatments = df['treatment']
+    sizes = df['size']
+    recoveries = df['recovery']
+    ind_treatment = treatments == value
+    sizes_values = unique(sizes)
+
+    adjusted_prob = 0
+    for z in sizes_values:
+        ind_size = sizes == z
+        ind = ind_treatment & ind_size
+        adjusted_prob += mean(recoveries[ind]) * mean(ind_size)
+    return adjusted_prob
+```
+
+# Bootstrapping
+
+```{python}
+ates = []
+for i in range(bootstrap_n):
+    kidney_resample = kidney.sample(frac=1, replace=True)
+    ates.append(adjustment(kidney_resample, "A") - adjustment(kidney_resample, "B"))
+```
+
+The estimated ATE is
+```{python}
+cis = round(quantile(ates, q=[0.025, 0.975]), 3)
+ate = mean(ates)
+f"{round(mean(ates), 3)} ({cis[0]}, {cis[1]})"
+```

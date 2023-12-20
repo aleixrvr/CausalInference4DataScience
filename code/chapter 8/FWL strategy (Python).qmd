@@ -1,0 +1,42 @@
+---
+title: "FWL strategy"
+format: ipynb
+jupyter: python3
+number-sections: true
+---
+
+# Data simulation
+
+```{python}
+from numpy.random import seed, normal, uniform
+import pandas as pd
+import statsmodels.api as sm
+
+seed(1234)
+n = 100
+
+confounder = uniform(size=n)
+treatment = -3 * confounder + normal(size=n)
+outcome = -2 * confounder + 5 * treatment + normal(size=n)
+df = pd.DataFrame(
+    {"confounder": confounder, "treatment": treatment, "outcome": outcome}
+)
+```
+
+# Linear estimation controlling for confounders
+
+```{python}
+model = sm.OLS(outcome, df[["treatment", "confounder"]]).fit()
+model.params
+```
+
+
+# FWL strategy 
+
+```{python}
+model_treatment = sm.OLS(treatment, confounder).fit()
+residuals_treatment = treatment - model_treatment.predict(confounder)
+model_outcome = sm.OLS(outcome, confounder).fit()
+residuals_outcome = outcome - model_outcome.predict(confounder)
+sm.OLS(residuals_outcome, residuals_treatment).fit().params
+```
