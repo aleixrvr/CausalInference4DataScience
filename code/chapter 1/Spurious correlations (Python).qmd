@@ -1,0 +1,34 @@
+---
+title: "Structural Approach to Interventions"
+format: ipynb
+jupyter: python3
+number-sections: true
+---
+
+
+# Creating spurious correlations
+
+```{python}
+from numpy.random import uniform, seed, normal
+from numpy import arange, corrcoef
+import pandas as pd
+
+seed(1234)
+
+time = arange(2000, 2010)
+population = (
+    280 + 3 * (time - 2000) + normal(size=len(time), scale=0.1)
+)  # in millions of people
+revenue = (
+    1.25 + (population - 280) * 0.015 + normal(size=len(time), scale=0.05)
+)  # in billions of dollars
+doctorates = (
+    700 + (population - 280) * 30 + normal(size=len(time), scale=10)
+)  # in number of people
+```
+
+Correlation between revenue and doctorates.
+
+```{python}
+corrcoef(doctorates, revenue)[0][1]
+```

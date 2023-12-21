@@ -1,0 +1,39 @@
+---
+title: "Structural Approach to Interventions"
+number-sections: true
+format:
+  html:
+    toc: true
+    toc-location: left
+    theme: default
+    embed-resources: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = "")
+```
+
+# Creating spurious correlations
+
+
+```{r}
+
+set.seed(1234)
+
+time <- 2000:2009
+population <- (
+    280 + 3 * (time - 2000) + rnorm(n=length(time), sd=0.1)
+)  # in millions of people
+revenue <- (
+    1.25 + (population - 280) * 0.015 + rnorm(n=length(time), sd=0.05)
+)  # in billions of dollars
+doctorates <- (
+    700 + (population - 280) * 30 + rnorm(n=length(time), sd=10)
+)  # in number of people
+```
+
+Correlation between revenue and doctorates.
+
+```{r}
+cor(doctorates, revenue)
+```

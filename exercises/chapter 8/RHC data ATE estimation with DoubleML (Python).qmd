@@ -1,0 +1,76 @@
+---
+title: "RHC data ATE estimation with DoubleML"
+format: ipynb
+jupyter: python3
+number-sections: true
+---
+
+
+```{python libraries}
+import pandas as pd
+import yaml
+import numpy as np
+from numpy.random import seed
+import doubleml as dml
+
+from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
+
+import random
+
+seed(1234)
+```
+
+
+```{python reading_data}
+rhc = pd.read_csv("materials/rhc_dataset.csv")
+with open("materials/confounders.yml", "r") as f:
+    confounders = yaml.safe_load(f)
+
+rhc["swang1"] = (rhc["swang1"] == "RHC").astype(int)
+rhc["death"] = (rhc["death"] == "Yes").astype(int)
+rhc.groupby("swang1")["death"].mean()
+
+rhc_numerical = pd.get_dummies(rhc[['swang1', 'death'] + confounders], dtype=float, drop_first=True)
+```
+
+# ATE estimation with confidence intervals with DoubleML
+
+DoubleML documentation:
+
+- [hyperparameter tuning](https://docs.doubleml.org/stable/guide/learners.html#r-learners-and-hyperparameters)
+- [DoubleMLPLR documentation](https://docs.doubleml.org/stable/api/generated/doubleml.DoubleMLPLR.html#doubleml.DoubleMLPLR.tune)
+
+
+```{python}
+# DoubleMLData and DoubleMLPLR initialization
+confounders_ = [c for c in rhc_numerical.columns if c not in ["swang1", "death"]]
+data_dml = dml.DoubleMLData(
+    rhc_numerical, y_col="death", d_cols="swang1", x_cols=confounders_
+)
+
+ml_m = GradientBoostingClassifier()
+ml_l = GradientBoostingRegressor()
+dml_plr_obj = dml.DoubleMLPLR(data_dml, ml_l, ml_m)
+
+# Hyperparameter setting
+learning_rate = [0.001, 0.01, 0.1]
+n_estimators = [50, 100, 200]
+max_depth = [1, 2, 3]
+
+par_grids = {
+    "ml_l": {
+        "n_estimators": n_estimators,
+        "max_depth": max_depth,
+    },
+    "ml_m": {
+        "learning_rate": learning_rate,
+        "n_estimators": n_estimators,
+        "max_depth": max_depth,
+    },
+}
+
+# Fine-tuning and effect estimation
+dml_plr_obj.tune(param_grids=par_grids, tune_on_folds=True, search_mode="grid_search")
+results = dml_plr_obj.fit()
+results.summary
+```

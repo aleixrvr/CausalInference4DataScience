@@ -1,0 +1,88 @@
+---
+title: "RHC data ATE estimation with DoubleML"
+number-sections: true
+format:
+  html:
+    toc: true
+    toc-location: left
+    theme: default
+    embed-resources: true
+---
+
+```{r echo=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, comment = "", warning = FALSE)
+```
+
+
+```{r libraries}
+library(data.table)
+library(magrittr)
+library(DoubleML)
+library(mlr3)
+library(mlr3learners)
+library(mlr3tuning)
+library(yaml)
+library(paradox)
+
+set.seed(1234)
+confounders <- read_yaml("materials/confounders.yml")
+rhc <- fread("materials/rhc_dataset.csv") %>%
+    .[, swang1 := ifelse(swang1 == "RHC", 1, 0)] %>%
+    .[, death := ifelse(death == "Yes", 1, 0)] %>%
+    .[, .SD, .SDcols = c('swang1', 'death', confounders)]
+```
+
+Difference of means
+```{r death_stats}
+rhc[, mean(death == "Yes"), swang1]
+```
+
+DoubleML documentation:
+
+- [hyperparameter tuning](https://docs.doubleml.org/stable/guide/learners.html#r-learners-and-hyperparameters)
+- [DoubleMLPLR documentation](https://docs.doubleml.org/r/stable/reference/DoubleMLPLR.html#method-DoubleMLPLR-tune)
+
+```{r}
+#| output: false
+rhc_numerical <- data.table(model.matrix(death ~. - 1, rhc))
+rhc_numerical[, death := rhc[, death]]
+
+# names standarization
+for(var_name in colnames(rhc_numerical)){
+    setnames(rhc_numerical, var_name, tolower(gsub("[ &$/-]", "", var_name)))
+}
+
+confounders_ <- setdiff(colnames(rhc_numerical), c('swang1', 'death'))
+dml_data <- DoubleMLData$new(rhc_numerical, y_col="death", d_cols="swang1", x_cols = confounders_)
+
+ml_m = lrn("classif.xgboost")
+ml_l = lrn("regr.xgboost")
+dml_plr_obj = DoubleMLPLR$new(dml_data, ml_l, ml_m)
+
+par_grids = list(
+    "ml_l" = ParamSet$new(list(
+        ParamInt$new("nrounds", lower = 1, upper = 200),
+        ParamInt$new("max_depth", lower = 1, upper = 3),
+        ParamDbl$new("eta", lower = 0.1, upper = 0.5)
+    )),
+    "ml_m" =   ParamSet$new(list(
+        ParamInt$new("nrounds", lower = 1, upper = 200),
+        ParamInt$new("max_depth", lower = 1, upper = 3)
+    ))
+)
+
+tune_settings = list(terminator = trm("evals", n_evals = 20),
+                      algorithm = tnr("grid_search", resolution = 10),
+                      rsmp_tune = rsmp("cv", folds = 5),
+                      measure = list("ml_l" = msr("regr.mse"),
+                                     "ml_m" = msr("classif.auc")))
+dml_plr_obj$tune(param_set=par_grids, tune_settings=tune_settings, tune_on_fold=TRUE)
+print(dml_plr_obj$params)
+
+dml_plr_obj$fit()
+```
+
+
+```{r}
+dml_plr_obj$summary()
+```
