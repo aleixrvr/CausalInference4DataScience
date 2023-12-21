@@ -1,0 +1,72 @@
+---
+title: "Chains, forks and colliders"
+number-sections: true
+format:
+  html:
+    toc: true
+    toc-location: left
+    theme: default
+    embed-resources: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = "")
+```
+
+
+
+# Chains
+
+```{r}
+set.seed(1234)
+
+n <- 10000
+
+x <- rbinom(n, 1, 0.5)
+y <- x * rbinom(n, 1, 0.3) + (1-x)*rbinom(n, 1, 0.7)
+z <- y * rbinom(n, 1, 0.1) + (1-y)*rbinom(n, 1, 0.9)
+
+cor(x, z)
+```
+
+The correlation between x and z, conditioning on y = 1 or y = 0, is close to zero, while the unconditional correlation between x and z it is not.
+```{r}
+print(cor(x[y == 1], z[y == 1]))
+print(cor(x[y == 0], z[y == 0]))
+```
+
+
+# Forks
+
+```{r}
+z <- rbinom(n, 1, 0.5)
+y <- z * rbinom(n, 1, 0.3) + (1-z)*rbinom(n, 1, 0.7)
+x <- z * rbinom(n, 1, 0.3) + (1-z)*rbinom(n, 1, 0.7)
+
+cor(y, x)
+```
+
+The correlation between x and y, conditioning on z = 1 or z = 0, is close to zero, while the unconditional correlation between x and y it is not.
+```{r}
+print(cor(x[z == 1], y[z == 1]))
+print(cor(x[z == 0], y[z == 0]))
+```
+
+
+# Colliders
+
+```{r}
+x <- rbinom(n, 1, 0.5)
+y <- rbinom(n, 1, 0.5)
+z <- (1-x*y) * rbinom(n, 1, 0.2) + x*y*rbinom(n, 1, 0.8)
+
+cor(y, x)
+```
+
+The correlation between x and y is close to zero, while conditioning on z = 1 or z = 0 it is not.
+
+```{r}
+print(cor(x[z == 1], y[z == 1]))
+print(cor(x[z == 0], y[z == 0]))
+```
+
