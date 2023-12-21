@@ -1,5 +1,5 @@
 ---
-title: "Structural Approach to Interventions"
+title: "Creating spurious correlations"
 number-sections: true
 format:
   html:

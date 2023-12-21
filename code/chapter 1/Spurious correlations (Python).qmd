@@ -1,5 +1,5 @@
 ---
-title: "Structural Approach to Interventions"
+title: "Creating spurious correlations"
 format: ipynb
 jupyter: python3
 number-sections: true
