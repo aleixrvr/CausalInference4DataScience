@@ -7,7 +7,7 @@ number-sections: true
 
 # Data simulation
 
-```{r}
+```{python}
 from numpy.random import choice, normal
 import statsmodels.formula.api as smf
 import random
@@ -29,19 +29,19 @@ df = pd.DataFrame({'price': price, 'distance': distance, 'customers': customers}
 # Impact of price
 
 Running a linear regression
-```{r}
+```{python}
 smf.ols(formula='customers ~ price', data=df).fit().summary()
 ```
 We see that the coefficient of the price is positive, which shouldn't be like this (we know for sure that it should be -2)
 
 If we plot the data, we see that there is a positive trend of the price into the number of customers, so it is not a problem of the linear regression.
-```{r}
+```{python}
 sns.regplot(x = 'price', y = 'customers', data=df)
 ```
 
 If we plot the data including the distance we can see that the distance is acting as a confounder
 
-```{r}
+```{python}
 fig, ax = plt.subplots(figsize=(6, 6))
 
 df_0 = df[df['distance'] == 0.0]
@@ -57,7 +57,7 @@ plt.show()
 
 Now we include the distance into the regression and we see that the coefficient of price is close to the real coefficient.
 
-```{r}
+```{python}
 smf.ols(formula='customers ~ price + distance', data=df).fit().summary()
 ```
 
@@ -65,7 +65,7 @@ smf.ols(formula='customers ~ price + distance', data=df).fit().summary()
 
 When we are interested in measuring the total effect, since the distance has no confounders, we can directly run the regression
 
-```{r}
+```{python}
 smf.ols(formula='customers ~ distance', data=df).fit().summary()
 ```
 
