@@ -30,7 +30,7 @@ df = pd.DataFrame({'price': price, 'distance': distance, 'customers': customers}
 
 Running a linear regression
 ```{python}
-smf.ols(formula='customers ~ price', data=df).fit().summary()
+print(smf.ols(formula="customers ~ price", data=df).fit().summary())
 ```
 We see that the coefficient of the price is positive, which shouldn't be like this (we know for sure that it should be -2)
 
@@ -58,7 +58,7 @@ plt.show()
 Now we include the distance into the regression and we see that the coefficient of price is close to the real coefficient.
 
 ```{python}
-smf.ols(formula='customers ~ price + distance', data=df).fit().summary()
+print(smf.ols(formula='customers ~ price + distance', data=df).fit().summary())
 ```
 
 # Impact of distance
@@ -66,7 +66,7 @@ smf.ols(formula='customers ~ price + distance', data=df).fit().summary()
 When we are interested in measuring the total effect, since the distance has no confounders, we can directly run the regression
 
 ```{python}
-smf.ols(formula='customers ~ distance', data=df).fit().summary()
+print(smf.ols(formula="customers ~ distance", data=df).fit().summary())
 ```
 
 Obtaining a coefficient of the distance that is close to the -4 that it is expected to be
