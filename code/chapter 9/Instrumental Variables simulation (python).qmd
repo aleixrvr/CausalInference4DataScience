@@ -17,6 +17,8 @@ import doubleml as dml
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from linearmodels.iv.model import IV2SLS
 
+seed(1234)
+
 n = 1000
 instrument_impact = 0.7
 treatment_effect = -2

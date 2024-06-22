@@ -1,0 +1,121 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "---\n",
+        "title: \"Propensity Score Exercise Starter\"\n",
+        "format: ipynb\n",
+        "jupyter: python3\n",
+        "number-sections: true\n",
+        "---"
+      ],
+      "id": "394c9c0b"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "import pandas as pd\n",
+        "import yaml\n",
+        "from sklearn.linear_model import LogisticRegression\n",
+        "from sklearn.metrics import roc_auc_score\n",
+        "import seaborn as sns\n",
+        "import matplotlib.pyplot as plt"
+      ],
+      "id": "2ea8170d",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "First we read the dataset and calculate the proportion of deaths in each group"
+      ],
+      "id": "25a17dcd"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "rhc = pd.read_csv(\"materials/rhc_dataset.csv\")\n",
+        "with open(\"materials/confounders.yml\", \"r\") as f:\n",
+        "    confounders = yaml.safe_load(f)\n",
+        "\n",
+        "rhc[\"swang1\"] = (rhc[\"swang1\"] == \"RHC\").astype(int)\n",
+        "rhc[\"death\"] = (rhc[\"death\"] == \"Yes\").astype(int)\n",
+        "rhc.groupby(\"swang1\")[\"death\"].mean()"
+      ],
+      "id": "1a471d04",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "Let's calculate the propensity score using logistic regression, and evaluate its accuracy using the AUC (observe that in this case we haven't used cross-fitting)."
+      ],
+      "id": "99f93b94"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "X = rhc[confounders]\n",
+        "X = pd.get_dummies(X)\n",
+        "y = rhc[\"swang1\"]\n",
+        "ps_model = LogisticRegression(penalty=None)\n",
+        "ps_model.fit(X, y)\n",
+        "rhc[\"ps_scores\"] = ps_model.predict_proba(X)[:, 1]"
+      ],
+      "id": "296ac8e5",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "With the predicted propensity scores, we can plot their distribution for both groups to visual assess the positivity assumption"
+      ],
+      "id": "c7b1b7f4"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "auc = round(roc_auc_score(rhc[\"swang1\"], rhc[\"ps_scores\"]), 4)\n",
+        "sns.kdeplot(\n",
+        "    data=rhc, x=\"ps_scores\", hue=\"swang1\", fill=True, common_norm=False, alpha=0.4\n",
+        ").set_title(f\"AUC logistic:{auc}\")\n",
+        "plt.show()"
+      ],
+      "id": "d2f9ea51",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "In this dataset there is a clear overlap between treatment and control groups, so, if we used logistic regression for calculating the propensity scores, we would conclude that the positivity assumption holds for every patient.\n",
+        "\n",
+        "Now it's your turn, and you can follow the steps provided in the book. The main objective is to elaborate more the calculation of propensity scores using machine learning models (boosting) and also calculate the ATE. Good luck!"
+      ],
+      "id": "4f34afe6"
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "name": "python3",
+      "language": "python",
+      "display_name": "Python 3 (ipykernel)",
+      "path": "/Users/aleix/Library/Python/3.9/share/jupyter/kernels/python3"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 5
+}

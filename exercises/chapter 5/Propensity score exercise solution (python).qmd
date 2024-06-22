@@ -199,7 +199,7 @@ ATE_1 = ATE_1 - ps_model_boost_2_nrhc.predict_proba(D1_X)[:, 1]
 ATE_2 = ps_model_boost_1_rhc.predict_proba(D2_X)[:, 1]
 ATE_2 = ATE_2 - ps_model_boost_1_nrhc.predict_proba(D2_X)[:, 1]
 
-ATE_values = np.concatenate([ATE_1, ATE_1])
+ATE_values = np.concatenate([ATE_1, ATE_2])
 ```
 
 The ATE is

@@ -33,7 +33,7 @@ Let's calculate the propensity score using logistic regression, and evaluate its
 X = rhc[confounders]
 X = pd.get_dummies(X)
 y = rhc["swang1"]
-ps_model = LogisticRegression(penalty="none")
+ps_model = LogisticRegression(penalty=None)
 ps_model.fit(X, y)
 rhc["ps_scores"] = ps_model.predict_proba(X)[:, 1]
 ```

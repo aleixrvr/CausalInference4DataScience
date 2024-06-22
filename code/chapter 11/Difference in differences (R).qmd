@@ -137,7 +137,8 @@ diff_1 - diff_0
 
 ```{r}
 model <- lm(Y~D*time_points, data=df_observed)
-summary(model)
+print(summary(model))
+confint(model, level = 0.95) 
 ```
 
 # DiD ATET with linear models with additional covariates
@@ -159,7 +160,8 @@ df_observed_age <- data.frame(
 )
 
 model <- lm(Y~D*time_points + A, data=df_observed_age)
-summary(model)
+print(summary(model))
+confint(model, level = 0.95) 
 ```
 
 # DiD ATET with the did package
