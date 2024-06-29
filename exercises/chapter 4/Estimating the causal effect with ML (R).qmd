@@ -13,6 +13,8 @@ format:
 knitr::opts_chunk$set(echo = TRUE, comment = "")
 ```
 
+Here you can find the solution to the exervise in Chapter 4. We will use the libraries `rpart` that trains decision trees. First, we set the parameters (we used the function `set.seed` to make the example is reproducible).
+
 ```{r}
 library(rpart)
 set.seed(12345)
@@ -35,11 +37,15 @@ df <- data.frame(z, x, y)
 ```
 
 
+Note that if we tried to see the difference of outcome y, as a naive estimation of the impact of x into y, we would see that the results 7.60 is quite far from the actual value
+
 # Calculate the difference between groups of outcome y
 ```{r}
 mean(df[df$x == 1, ]$y) - mean(df[df$x == 0, ]$y)
 ```
 
+
+Third, we use the S-learner. For that we train a decision tree, and create two new datasets, one with variable x set 0 zero in all observations and another with x=1 in all observations. Finally, the ATE is estimated as the mean difference of the prediction of the trained model in both new datasets.
 
 # S-learner
 ```{r}
@@ -60,6 +66,11 @@ print("ATE")
 print(mean(predictions_1 - predictions_0))
 print(predictions_1 - predictions_0)
 ```
+
+
+The arguments minsplit=2 and cp=0 in R are set to force the tree to arrive at the maximum depth. You will get an ATE of 0. Moreover, the differences for each observation (predictions_1 – predictions_0) are also 0. Notice that this happens for a particular choice of seed. In general, if you change the seed, you will see that not always you have an ATE of 0. However, a numerical methods that from time to time gives an incorrect answer, zero, is not a good numerical method.
+
+Let’s see how the T-Learner works now. First, we partition the dataset into the observations with x = 0 and with x = 1. Then we train a model for each group, and use both models to predict for each observation, what would be the expected outcome y when x is set to 0 and the same for x equal 1.
 
 
 # T-Learner
@@ -85,3 +96,6 @@ print(mean(predictions_1 - predictions_0))
 print(predictions_1 - predictions_0)
 ```
 
+You can see that the ATE in this case is 3.41 , much better (closer to the actual value of 2) than the difference of means of outcomes in group x = 0 and x = 1, that were 7.60.
+
+Notice also that we have set the maximum depth to 5. In a realistic situation, maximum depth would be chosen via hyperparameter tunning, so splitting data into many groups, calculating cross-validations and trying different sets of parameters.
