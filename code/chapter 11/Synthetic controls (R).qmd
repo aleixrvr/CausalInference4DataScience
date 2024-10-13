@@ -44,7 +44,8 @@ df <- data.frame(Y, X_1, X_2, time=time_points)
 
 ```{r}
 df_plot <- pivot_longer(df, cols=c('Y', 'X_1', 'X_2'),names_to = 'variable' )
-res_plot <- ggplot(df_plot, aes(time, value, color=variable)) +
+res_plot <- ggplot(df_plot, aes(time, value, linetype=variable, shape=variable)) +
+  geom_point() +
   geom_line() +
   ylab('Number of views')
 

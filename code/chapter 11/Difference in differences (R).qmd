@@ -50,9 +50,10 @@ df_all <- data.frame(
 )
 
 res_plot <- ggplot(df_observed, aes(time_points, Y, color=as.factor(D))) +
-  geom_point() +
-  geom_smooth(method=lm, se=FALSE) +
-  guides(color=guide_legend(title="D")) +
+  geom_point(aes(shape=as.factor(D))) +
+  geom_smooth(method=lm, se=TRUE) +
+  scale_colour_discrete(guide = "none") + 
+  guides(shape=guide_legend(title="D")) +
   ylab('Number of views') 
   
 # ggsave('ch11-dids_observed.png', res_plot)
@@ -61,11 +62,11 @@ res_plot
 
 
 ```{r}
-res_plot <- ggplot(df_all, aes(time_points, color=as.factor(D))) +
+res_plot <- ggplot(df_all, aes(time_points, color=as.factor(D), shape=as.factor(D))) +
   geom_point(aes(y=Y_0), shape=1) +
   geom_point(aes(y=Y_1)) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
-  guides(color=guide_legend(title="D")) +
+  guides(shape=guide_legend(title="D")) +
   ylab('Number of views') +
   stat_summary(
     aes(time_points, Y_0, group=as.factor(D)),
@@ -74,6 +75,7 @@ res_plot <- ggplot(df_all, aes(time_points, color=as.factor(D))) +
     col = "black",
     shape=1
   ) +
+  scale_colour_discrete(guide = "none") + 
   stat_summary(
     aes(time_points, Y_1, group=as.factor(D)),
     geom = "point",
@@ -88,14 +90,16 @@ res_plot
 
 
 ```{r}
-res_plot <- ggplot(df_all, aes(time_points, color=as.factor(D))) +
-  geom_point(aes(y=Y_0), shape=1) +
+res_plot <- ggplot(df_all, aes(time_points, color=as.factor(D), shape=as.factor(D))) +
+  geom_jitter(aes(y=Y_0), shape=1, width = 0.01) +
   geom_smooth(aes(y=Y_0), method=lm, linetype="dashed", se=FALSE) +
-  geom_point(aes(y=Y_1)) +
+  geom_jitter(aes(y=Y_1), width = 0.01) +
+  scale_shape_manual(values=c(17, 19)) +
+  scale_colour_discrete(guide = "none") + 
   geom_smooth(aes(y=Y_1), method=lm, linetype="solid", se=FALSE) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
-  guides(color=guide_legend(title="D")) +
-  ylab('Number of views')
+  guides(shape=guide_legend(title="D")) +
+  ylab('Number of views') 
 
 # ggsave('ch11-dids_counterfactual.png', res_plot)
 res_plot

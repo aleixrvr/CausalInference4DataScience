@@ -60,7 +60,7 @@ df_po <- data.frame(
   y = c(Y_0, Y_1),
   potential_outcomes = c(rep('0', n), rep('1', n))
 )
-res_plot <- ggplot(df_po, aes(time, y, color=potential_outcomes, shape=potential_outcomes)) +
+res_plot <- ggplot(df_po, aes(time, y, color=potential_outcomes, shape=potential_outcomes, linetype=potential_outcomes)) +
   geom_line(alpha=0.6) +
   geom_point(alpha=0.6) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
@@ -96,7 +96,7 @@ res_plot
 ```{r}
 df_observed_ <- df_observed
 df_observed_$D <- as.factor(df_observed_$D)
-res_plot <- ggplot(df_observed_, aes(time, Y, color=D)) +
+res_plot <- ggplot(df_observed_, aes(time, Y, color=D, linetype = D)) +
   geom_line() +
   geom_smooth(method=lm, se=FALSE) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
