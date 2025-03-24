@@ -3264,7 +3264,7 @@ Coefficients:
 <section id="doubleml" class="level2" data-number="2.3">
 <h2 data-number="2.3" class="anchored" data-anchor-id="doubleml"><span class="header-section-number">2.3</span> DoubleML</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">generate_data</span>(<span class="at">instrument_effect =</span> <span class="fl">0.5</span>, n)</span>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">generate_data</span>(<span class="at">instrument_effect =</span> <span class="fl">0.7</span>, n)</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>df[<span class="st">&#39;x&#39;</span>] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>obj_dml_data <span class="ot">=</span> DoubleMLData<span class="sc">$</span><span class="fu">new</span>(</span>
@@ -3301,13 +3301,13 @@ Apply cross-fitting: TRUE
 ------------------ Fit summary       ------------------
  Estimates and significance testing of the effect of target variables
           Estimate. Std. Error t value Pr(&gt;|t|)    
-treatment   -1.8946     0.1955  -9.691   &lt;2e-16 ***
+treatment   -1.9203     0.1481  -12.97   &lt;2e-16 ***
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">estimate_impact</span>(df))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] -1.890739</code></pre>
+<pre><code>[1] -1.917345</code></pre>
 </div>
 </div>
 </section>

@@ -113,7 +113,7 @@ ggplot(results, aes(estimates, fill=instrument_effect)) +
 ## DoubleML
 
 ```{r}
-df <- generate_data(instrument_effect = 0.5, n)
+df <- generate_data(instrument_effect = 0.7, n)
 df['x'] <- 1
 
 obj_dml_data = DoubleMLData$new(

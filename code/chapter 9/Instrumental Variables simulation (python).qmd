@@ -72,7 +72,7 @@ def generate_data(instrument_impact, n):
     confounder = binomial(1, 0.3, n)
     instrument = binomial(1, 0.5, n)
     treatment = (uniform(0, 1, n) <= instrument_impact*instrument + 0.4*confounder).astype(int)
-    outcome = 30 + instrument_impact*treatment + 10 * confounder + normal(0, 2, n)
+    outcome = 30 + treatment_effect*treatment + 10 * confounder + normal(0, 2, n)
 
     return(DataFrame({
         'instrument': instrument,
@@ -118,7 +118,7 @@ kdeplot(data = df_plot, x='estimate', hue='instrument_impact')
 
 ```{python}
 n = 10000
-df = generate_data(0.5, 1000)
+df = generate_data(0.7, 1000)
 
 print(estimate_impact(df))
 df['x'] = 1
